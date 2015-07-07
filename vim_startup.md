@@ -28,8 +28,9 @@ Also, you can customize your favorite configurations in ~/.vimrc. And you can se
 Read the conventions(default VIM configurations) before you start playing with VIM.
 
 ## Conventions
-
-lead: Space, a trigger to manipulate collaboration among VIM and plugins.
+```
+<lead>: Space, a trigger to manipulate collaboration among VIM and plugins.
+```
 
 ## Basic
 
@@ -42,7 +43,7 @@ vi [directory]
 Hide/Show file navigator
 
 ```
-lead t
+<lead> t
 ```
 
 Open split window into multiple pieces
@@ -54,7 +55,7 @@ Open split window into multiple pieces
 Open a VimShell to run shell without switching to another window
 
 ```
-lead c
+<lead> c
 ```
 
 View help
