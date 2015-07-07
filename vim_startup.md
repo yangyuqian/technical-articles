@@ -25,7 +25,7 @@ Also, you can customize your favorite configurations in ~/.vimrc. And you can se
 
 # Handy Techniques
 
-Read the conventions(default VIM configurations) before you start practicing.
+Read the conventions(default VIM configurations) before you start playing with VIM.
 
 ## Conventions
 
