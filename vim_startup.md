@@ -28,9 +28,8 @@ Also, you can customize your favorite configurations in ~/.vimrc. And you can se
 Read the conventions(default VIM configurations) before you start playing with VIM.
 
 ## Conventions
-```
-<lead>: Space, a trigger to manipulate collaboration among VIM and plugins.
-```
+
+![Lead Key](https://github.com/yangyuqian/technical-articles/blob/master/images/lead-key.jpg)
 
 ## Basic
 
