@@ -17,8 +17,20 @@ Scenario Forecasting
 Competitor | Algorithm | AF Module
 -------------|------------|----------
 External Ad | GA of external ad * competing intensity | aggregator
-Sponsor Ad | if Sponsor Competitor meet it's budget, then Booked Imps += 1; if there are 1+ sponsor Ads inside a single slot, then UGA of this slot will be divided into equivalent Booked Imps of each Ad; if slot is sponsored by some ad(and no sponsor competitor), then Booked Imps = UGA; | aggregator or simulator
+Sponsor Ad | if Sponsor Competitor meet it's budget, then Booked Imps will be considered; if there are 1+ sponsor Ads inside a single slot, then UGA of this slot will be divided into equivalent Booked Imps of each Ad; if slot is sponsored by some ad(and no sponsor competitor), then Booked Imps = UGA; | aggregator or simulator
+Exclusivity (normal) | just like sponsor competitors | aggregator(?)
+Linked(Companion) Display | the Companion diplay Ad will be counted as the booked Impressions of the 'standalone' ad, which can not be served individually due to companion compatitors | (?)
 
+Normal cases along with competitors:
 
+- A evergreen/plc meets its end date, known as soft cutoff, then its Booked Impressions will be 0
+
+- Ads can compete with each other through currency budget
+
+Known Issues:
+
+- Forecasting engine doesn't honor the daypart targeting
+
+Please see [Calculate Booked Impressions](http://wiki.dev.fwmrm.net/display/wq/How+to+calculate+Book+Imps), [Booked Impressions in Portfolio](http://wiki.dev.fwmrm.net/display/ForecastPortal/Portfolio+Metrics+---+Booked+Impression), [Booked Impressions in Transactional](http://wiki.dev.fwmrm.net/display/ForecastPortal/Transactional+Metrics+---+Booked+Impressions) for more details.
 
 
