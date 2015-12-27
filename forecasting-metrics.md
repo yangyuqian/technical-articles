@@ -39,11 +39,11 @@ Portfolio UI(New)
 
 Portfolio UI(Legacy)
 
-![Portfolio(Legacy) UI - Booked Imps](https://github.com/yangyuqian/technical-articles/blob/master/images/lead-key.jpg)
+![Portfolio(Legacy) UI - Booked Imps](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-legacy-summary-booked.png)
 
 Transactional UI
 
-![Transactional UI - Booked Imps](https://github.com/yangyuqian/technical-articles/blob/master/images/lead-key.jpg)
+![Transactional UI - Booked Imps](https://github.com/yangyuqian/technical-articles/blob/master/images/transactional-detail-page-booked.png)
 
 Please see [Calculate Booked Impressions](http://wiki.dev.fwmrm.net/display/wq/How+to+calculate+Book+Imps), [Booked Impressions in Portfolio](http://wiki.dev.fwmrm.net/display/ForecastPortal/Portfolio+Metrics+---+Booked+Impression), [Booked Impressions in Transactional](http://wiki.dev.fwmrm.net/display/ForecastPortal/Transactional+Metrics+---+Booked+Impressions) for more details.
 
