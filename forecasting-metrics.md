@@ -23,7 +23,7 @@ Linked(Companion) Display | the Companion diplay Ad will be counted as the booke
 
 Normal cases along with competitors:
 
-- An evergreen/plc meets its end date, known as soft cutoff, then its Booked Impressions will be 0
+- An evergreen(without budget) placement meets its end date, known as soft cutoff, then its Booked Impressions will be 0
 
 - Ads can compete with each other through currency budget
 
@@ -48,6 +48,27 @@ Transactional UI
 Please see [Calculate Booked Impressions](http://wiki.dev.fwmrm.net/display/wq/How+to+calculate+Book+Imps), [Booked Impressions in Portfolio](http://wiki.dev.fwmrm.net/display/ForecastPortal/Portfolio+Metrics+---+Booked+Impression), [Booked Impressions in Transactional](http://wiki.dev.fwmrm.net/display/ForecastPortal/Transactional+Metrics+---+Booked+Impressions) for more details.
 
 ### Net Avail
+
+In Portfolio, NA(Net Avail) indicates the amount of inventory that is available for sale, in another word, NA Ad opportunities of inventory segments inside the portfolio settings will be unfilled according to the forecasting result.
+
+![Portfolio(New) UI - Landing Page - NA]()
+
+![Portfolio(New) UI - Detail Page - NA]()
+
+In Transactional, NA shows the inventory matching the targeting criteria of placement. Transactional-NA = Displacing Guaranteed Ads + Displacing Preemptible Ads + Displacing Non-Paying Preemptible Ads + Unbooked Inventory(within the scope of targeting criteria), and it will ignore the budget settings on placement, and competing ads will be taken into consideration.
+
+NA = 0 because it meet the end of its schedule:
+
+![Transactional UI - NA - meet schedule](https://github.com/yangyuqian/technical-articles/blob/master/images/transactional-na-completed.png)
+
+It seems ads won't be delivered due to price = 0:
+
+![Transactional UI - NA - price 0](https://github.com/yangyuqian/technical-articles/blob/master/images/transactional-na-price-0.png)
+
+Normally serving ads:
+
+![Transactional UI - NA - normal serving](https://github.com/yangyuqian/technical-articles/blob/master/images/transactional-na-serving.png)
+
 
 ### Adjusted Capacity
 
