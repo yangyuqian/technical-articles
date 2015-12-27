@@ -23,13 +23,26 @@ Linked(Companion) Display | the Companion diplay Ad will be counted as the booke
 
 Normal cases along with competitors:
 
-- A evergreen/plc meets its end date, known as soft cutoff, then its Booked Impressions will be 0
+- An evergreen/plc meets its end date, known as soft cutoff, then its Booked Impressions will be 0
 
 - Ads can compete with each other through currency budget
 
 Known Issues:
 
 - Forecasting engine doesn't honor the daypart targeting
+
+UI Parts:
+Portfolio UI(New)
+
+![Lead Key](https://github.com/yangyuqian/technical-articles/blob/master/images/lead-key.jpg)
+
+Portfolio UI(Legacy)
+
+![Lead Key](https://github.com/yangyuqian/technical-articles/blob/master/images/lead-key.jpg)
+
+Transactional UI
+
+![Lead Key](https://github.com/yangyuqian/technical-articles/blob/master/images/lead-key.jpg)
 
 Please see [Calculate Booked Impressions](http://wiki.dev.fwmrm.net/display/wq/How+to+calculate+Book+Imps), [Booked Impressions in Portfolio](http://wiki.dev.fwmrm.net/display/ForecastPortal/Portfolio+Metrics+---+Booked+Impression), [Booked Impressions in Transactional](http://wiki.dev.fwmrm.net/display/ForecastPortal/Transactional+Metrics+---+Booked+Impressions) for more details.
 
