@@ -51,7 +51,7 @@ Please see [Calculate Booked Impressions](http://wiki.dev.fwmrm.net/display/wq/H
 
 In Portfolio, NA(Net Avail) indicates the amount of inventory that is available for sale, in another word, NA Ad opportunities of inventory segments inside the portfolio settings will be unfilled according to the forecasting result.
 
-![Portfolio(New) UI - Landing Page - NA]()
+![Portfolio(New) UI - Landing Page - NA](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-landing-page-na.png)
 
 ![Portfolio(New) UI - Detail Page - NA](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-detail-page-na.png)
 
