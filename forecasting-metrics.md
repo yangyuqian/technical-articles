@@ -47,4 +47,29 @@ Transactional UI
 
 Please see [Calculate Booked Impressions](http://wiki.dev.fwmrm.net/display/wq/How+to+calculate+Book+Imps), [Booked Impressions in Portfolio](http://wiki.dev.fwmrm.net/display/ForecastPortal/Portfolio+Metrics+---+Booked+Impression), [Booked Impressions in Transactional](http://wiki.dev.fwmrm.net/display/ForecastPortal/Transactional+Metrics+---+Booked+Impressions) for more details.
 
+### Net Avail
+
+### Adjusted Capacity
+
+### Gross Avail
+
+### Forecasted to Deliver
+
+### Competing Intensity
+
+### FFDR
+
+### OSI
+
+### Straight-Line OSI
+
+### Trend
+
+### Consumed Impressions
+
+### Transactional IMP
+
+### Displacing
+
+### SELF
 
