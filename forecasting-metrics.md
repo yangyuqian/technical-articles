@@ -34,7 +34,8 @@ Known Issues:
 UI Parts:
 Portfolio UI(New)
 
-![Portfolio(New) UI - Booked Imps](https://github.com/yangyuqian/technical-articles/blob/master/images/lead-key.jpg)
+![Portfolio(New) UI - Landing Page - Booked Imps](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-new-landing-page-booked.png)
+![Portfolio(New) UI - Detail Page - Booked Imps](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-new-detail-page-booked.png)
 
 Portfolio UI(Legacy)
 
