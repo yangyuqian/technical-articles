@@ -14,7 +14,11 @@ Scenario Forecasting
 
 ### Booked Impressions
 
-
+-------------------------------
+| Competitor | Algorithm |
+--------------------------
+| External Ad | GA of external ad * competing intensity|
+--------------------------------------------------------
 
 
 
