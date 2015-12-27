@@ -55,6 +55,8 @@ In Portfolio, NA(Net Avail) indicates the amount of inventory that is available 
 
 ![Portfolio(New) UI - Detail Page - NA](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-detail-page-na.png)
 
+![Portfolio(Legacy) UI - Detail Page - NA](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-legacy-detail-page-na.png)
+
 In Transactional, NA shows the inventory matching the targeting criteria of placement. Transactional-NA = Displacing Guaranteed Ads + Displacing Preemptible Ads + Displacing Non-Paying Preemptible Ads + Unbooked Inventory(within the scope of targeting criteria), and it will ignore the budget settings on placement, and competing ads will be taken into consideration.
 
 NA = 0 because it meet the end of its schedule:
