@@ -74,6 +74,10 @@ Normally serving ads:
 
 ### Adjusted Capacity
 
+Adjusted Capacity is the abbreviation of Adjusted Unconstraint Gross Avail(Adjusted UGA), which takes the inventory guranteed to resellers into consideration.
+
+In Portfolio, Adjusted Capacity = PUGA (Gross Capacity) - Inventories granted to resellers with priority of "Hard Guaranteed without passback"
+
 ### Gross Avail
 
 ### Forecasted to Deliver
