@@ -18,7 +18,7 @@ Competitor | Algorithm | AF Module
 -------------|------------
 External Ad | GA of external ad * competing intensity | aggregator
 ------------|-----------
-Sponsor Ad | if Sponsor Competitor meet it's budget, then Booked Imps += 1; if there are 1+ sponsor Ads inside a single slot, then UGA of this slot will be divided into equivalent Booked Imps of each Ad; if slot is sponsored by some ad(and no sponsor competitor), then Booked Imps = UGA;
+Sponsor Ad | if Sponsor Competitor meet it's budget, then Booked Imps += 1; if there are 1+ sponsor Ads inside a single slot, then UGA of this slot will be divided into equivalent Booked Imps of each Ad; if slot is sponsored by some ad(and no sponsor competitor), then Booked Imps = UGA; | aggregator or simulator
 
 
 
