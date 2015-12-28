@@ -102,6 +102,8 @@ i.e.
 
 ![Portfolio FTD - targeting](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-ftd.png)
 
+In Transactional, there are Forecasted to Delivered Impressions/Budget.
+
 ### Competing Intensity
 
 Competing Intensity shows "How much is my competitors targeting on my targeted inventories".
@@ -136,13 +138,21 @@ OSI = Delivered Budget to Date * 100% / Budget Booked to be Delivered on this Da
 
 ### Straight-Line OSI
 
+Straight-Line OSI shows the fact if the OSI matches pacing curve.
+
+Straight-Line OSI = Delivered Budget to Date * 100% / Forecasted to Delivered Budget to Date
+
 ### Trend
+
+Trend visually shows the trend of OSI and FFDR in past 7 days.
 
 ### Consumed Impressions
 
-### Transactional IMP
+In Transactional, Consumed Impressions indicates the amount of impressions that competitors taking from Self.
+
+consume(A, B) = imps(B) * Competing Intensity(A, B) * lose_rate(A, B)
 
 ### Displacing
 
-### SELF
+Displacing indicates the amount of competitors' impressions should be taken by Self to make sure NA delivered.
 
