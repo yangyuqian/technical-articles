@@ -123,7 +123,7 @@ Biz Case | Total Budget | DB column
 ---------|--------------|----------
 Sponsor without volume cap or estimated impressions | if forecasted delivered impressions > 0, then FFDR = 100%, else 0% | ?
 Sponsor with volume cap | volume cap | OLTP.ad_tree_node.event_goal
-Sponsor with estimated impressions | OLTP.placement.estimated_impressions
+Sponsor with estimated impressions | estimated impressions | OLTP.placement.estimated_impressions
 Normal Ad | Budget | if currency goal is set, then budget will be OLTP.ad_tree_node.currency_goal, and the currency goal should be transformed into impressions; If impression goal is set, budget means OLTP.ad_tree_node.event_goal
 
 ### OSI
