@@ -88,6 +88,20 @@ Unconstraint Gross Avail(UGA) = Adjusted Capacity + Inventories granted to resel
 
 ### Forecasted to Deliver
 
+Forecasted to Deliver is the amount of ads will be delivered by the end of schedule, and it may be less than Booked Imps due to settings of exclusivity, capacity and competition. It's collected by simulating ad request to forecasting engine.
+
+In Portfolio, Self Forecasted to Deliver = SUM(ads will be delivered of a portfolio)
+
+Targeting | Portfolio v.s Transactional|Comment
+----------|----------------------------|--------------------
+boarder | Portfolio Self Forecasted to Deliver <= SUM(Transactional Impressions) | ?
+narrower | Portfolio Self Forecasted to Deliver = SUM(Transactional Impressions) | Portfolio FTD is simulated by really impressions on those placement
+uncomparable | Portfolio Self Forecasted to Deliver <=> SUM(Transactional Impressions) | ?
+
+i.e.
+
+![Portfolio FTD - targeting](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-ftd.png)
+
 ### Competing Intensity
 
 ### FFDR
