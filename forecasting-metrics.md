@@ -104,9 +104,35 @@ i.e.
 
 ### Competing Intensity
 
+Competing Intensity shows "How much is my competitors targeting on my targeted inventories".
+
+
+![Transactional - Competing Ads - Competing Intensity](https://github.com/yangyuqian/technical-articles/blob/master/images/transactional-competing-intensity.png)
+
+![Portfolio - Competing Ads - Competing Intensity](https://github.com/yangyuqian/technical-articles/blob/master/images/portfolio-competing-intensity.png)
+
 ### FFDR
 
+Forecast Final Delivery Rate(FFDR) is the forecasted delivery rate of budget of a placement.
+
+FFDR = Forecasted to Delivered Budget * 100% / Total Budget
+
+Total Budget:
+
+Biz Case | Total Budget | DB column
+---------|--------------|----------
+Sponsor without volume cap or estimated impressions | if forecasted delivered impressions > 0, then FFDR = 100%, else 0% | ?
+Sponsor with volume cap | volume cap | OLTP.ad_tree_node.event_goal
+Sponsor with estimated impressions | OLTP.placement.estimated_impressions
+Normal Ad | Budget | if currency goal is set, then budget will be OLTP.ad_tree_node.currency_goal, and the currency goal should be transformed into impressions; If impression goal is set, budget means OLTP.ad_tree_node.event_goal
+
 ### OSI
+
+On Schedule Indicator how fast the placement is delivered based on its pacing curve.
+
+OSI > 100% shows ad is over delivered, and < 100% means under delivery, =100% means it exactly matches the pacing curve
+
+OSI = Delivered Budget to Date * 100% / Budget Booked to be Delivered on this Date
 
 ### Straight-Line OSI
 
