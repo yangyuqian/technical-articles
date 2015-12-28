@@ -80,6 +80,12 @@ In Portfolio, Adjusted Capacity = PUGA (Gross Capacity) - Inventories granted to
 
 ### Gross Avail
 
+In Portfolio, there are Portfolio Unconstraint Gross Avail(PUGA).
+
+In Transactional, there are TUGA(Transactional Unconstraint Gross Avail) and TCGA(Transactional Contraint Gross Avail).
+
+Unconstraint Gross Avail(UGA) = Adjusted Capacity + Inventories granted to resellers with priority of "Hard Guaranteed without passback"
+
 ### Forecasted to Deliver
 
 ### Competing Intensity
