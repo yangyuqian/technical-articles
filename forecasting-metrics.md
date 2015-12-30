@@ -12,6 +12,16 @@ Transactional forecasting provides measurement on the ad delivery of some placem
 
 Scenario Forecasting
 
+Useful formulas of metrics on supply side, which is indepent to Booked Impressions:
+
+Gross Capacity >= Net Avail + Forecasted to Deliver
+
+Unconstraint Gross Avail >= Adjusted Capacity
+
+Unconstraint Gross Avail >= Constraint Gross Avail
+
+Booked Impressions depends on clients settings, indicating the demand of target(of a placement, or to a portfolio inventory segment). Others, including GA/NA/Adjusted Cap/FTD, are determined by the whole market.
+
 ### Booked Impressions
 
 Competitor | Algorithm | AF Module
