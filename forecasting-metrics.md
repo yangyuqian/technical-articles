@@ -21,6 +21,8 @@ Sponsor Ad | if Sponsor Competitor meet it's budget, then Booked Imps will be co
 Exclusivity (normal) | just like sponsor competitors | aggregator(?)
 Linked(Companion) Display | the Companion diplay Ad will be counted as the booked Impressions of the 'standalone' ad, which can not be served individually due to companion compatitors | (?)
 
+In Portfolio, Booked Impressions are the number of impressions that are currently booked in MRM against this segment that are budgeted for this period based on pacing settings, regardless of capacity or forecasted delivery. It acts as a way to give insight into the level of demand for a specific inventory segment.
+
 Normal cases along with competitors:
 
 - An evergreen(without budget) placement meets its end date, known as soft cutoff, then its Booked Impressions will be 0

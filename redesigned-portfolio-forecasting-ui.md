@@ -4,9 +4,7 @@ Portfolio Forecasting UI has been under heavy development through 2015, and this
 
 # Get Started
 
-[Portfolio Forecasting Metrics](#ForecastingMetrics)
-
-[Portfolio Forecast Redesign Release Plan](#Schedule)
+[Portfolio Forecasting Metrics](https://github.com/yangyuqian/technical-articles/blob/master/forecasting-metrics.md)
 
 # Engineering Introduction
 
@@ -15,3 +13,5 @@ Portfolio Forecasting UI has been under heavy development through 2015, and this
 ## Schema Design
 
 ## Dataflow
+
+## Contribute
