@@ -53,7 +53,9 @@ fwrpm_adv_rpt|MRM_ADV|lu_shard_vip_assignment|lu_network_shard_assignment
 
 ## Schema
 
-[Portfolio Schema]()
+[Portfolio Schema](./redesigned-portfolio-forecasting-ui.md#schema)
+
+[Transactional Schema](./transactional-forecasting-ui.md#schema)
 
 ## Libs
 
