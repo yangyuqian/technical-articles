@@ -113,6 +113,20 @@ f_custom_portfolio_competition | - | -
 f_transactional_placement_summary | - | -
 f_transactional_rbb_summary | - | -
 
+## Network Functions
+
+Function Names | Impacts
+---------------|------------
+FORECAST_TARGETING_SPECIFICITY | breakdown by targeting specificity in landing page(table/exports), detail page(chart/table/exports)
+FORECAST_BREAKDOWN_BY_BOOKED_PERCENTAGE | enable breakdouts for booked status(Actual/Considered Booked)
+ENABLE_HYLDA | enable Hylda breakouts in landing page(table/exports), detail page(chart/table/exports)
+MAX_ACTIVE_SCENARIO_FORECASTS | enable scenario forecasts in both landing page and detail page
+COMSCORE_VCE_API | enable Comscore vCE results in RBP dimensions
+NIELSEN_OCR_API | enable Nielsen DAR results in RBP dimensions
+AUDIENCE_TAB | enable Audience Item as dimensional type
+RATINGS_BASED_SELLING | enable RBP as dimension type
+ENABLE_UPFRONT | enable upfronts in competing ads(table/exports)
+COMPETING_ADS_BY_MONTH | monthly breakouts for competing ads(table/exports)
+
 ## Dataflow
 
-## Contribute
