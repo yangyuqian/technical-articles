@@ -53,6 +53,8 @@ fwrpm_adv_rpt|MRM_ADV|lu_shard_vip_assignment|lu_network_shard_assignment
 
 ## Schema
 
+[Portfolio Schema]()
+
 ## Libs
 
 ### eSQL
