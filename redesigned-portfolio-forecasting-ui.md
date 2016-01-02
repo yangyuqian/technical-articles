@@ -75,6 +75,11 @@ d_forecast_portfolio_dimension_item_assignment | d_od_forecast_portfolio_dimensi
 d_ad_tree_node | d_od_ad_tree_node | targeted ad units
 d_placement | d_od_placement | PlacementNode of target portfolio
 d_ad_unit | - | -
+d_upfront_plan_component_period | - | -
+d_upfront_plan_component_period_placement_assignment | - | -
+d_placement_trait | d_od_placement_trait | -
+d_rbb_placement_trait | d_od_rbb_placement_trait | -
+fc_info | - | Network/Scenario assignments, indicating schedule under different scenarios
 
 Dimensional Type v.s. AF-IB tables
 
@@ -101,9 +106,12 @@ Dimension Type ID | Name |  Dimension Table
 
 Fact Tables
 
-Table|Description
------|-----------
-
+Nightly Tables | On-Demand Tables | Description
+---------------|------------------|-------------
+f_custom_portfolio_daily | f_od_custom_portfolio_daily | Daily forcasting result for redesigned portfolio
+f_custom_portfolio_competition | - | -
+f_transactional_placement_summary | - | -
+f_transactional_rbb_summary | - | -
 
 ## Dataflow
 
