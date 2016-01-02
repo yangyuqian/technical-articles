@@ -32,6 +32,22 @@ DMA | NY, LA
 
 Therefore, traffic on *VG1 broken down US* may be larger than that on *sum of VG1 broken down by US further broken down by targeted items of DMA*.
 
+![a screenshot of chart for the dimensional metrics]
+
+There are a few special dimension types, and they are
+
+- Multi-Targeted: there is only 1 record in forecast_portfolio_dimension_item_assignment, and it must be {dimension_type_id: 128, dimension_order: 1, dimension_value: -1}
+
+- All Direct Children and RBP: sub_dimension_type_id is not null, i.e. {dimension_type_id: 6, dimension_order: 2, sub_dimension_type_id: 10, dimension_value: 1}
+
+UI restrain clients to create invalid dimensional combinations through a decision table:
+
+```
+# modules/forecasting_mgmt/app/models/forecasting_mgmt/portfolio_break_down_restriction.rb#54
+
+ForecastingMgmt::PortfolioBreakDownRestriction::DIMENSION_RESTRICTION
+```
+
 ## Schema
 
 OTLP
