@@ -50,7 +50,7 @@ ForecastingMgmt::PortfolioBreakDownRestriction::DIMENSION_RESTRICTION
 
 ## Schema
 
-OTLP
+### OTLP
 
 Table | Description
 ------|------------
@@ -64,10 +64,32 @@ targeting_criteria_assignment | parent-child of targeting_criterias
 targeting_criteria_item_assignment | item assignments for targeting
 
 
-AF-IB
+### AF-IB
 
+Dimensional Type v.s. AF-IB tables
 
+Dimension Type ID | Name |  Dimension Table
+------|-------------|----------------------
+1 | Country  | d_lu_country
+2 | State  | d_lu_state
+3 | City  | d_lu_city
+4 | DMA  | d_lu_dma
+9 | Video Group | d_asset_group
+10 | Site Section  | d_site_section
+11 | Site Group | d_site_section_group
+12 | Key-Values | d_key_value_term
+13 | Video Series | d_asset_group
+14 | Site | d_site_section_group
+16 | Zip Code | d_lu_postal_code
+17 | Postal Code Package | d_lu_postal_code_package
+18 | Region | d_lu_region
+19 | Platform  | d_lu_user_agent_platform
+20 | ISP | d_lu_targetable_isp
+21 | Audience Item | d_audience_item
+130 | Comscore vCE | d_lu_comscore_demographic
+131 | Nielsen DAR| d_lu_nielsen_demographic
 
+Fact Tables
 
 ## Dataflow
 
