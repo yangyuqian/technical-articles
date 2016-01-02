@@ -66,6 +66,16 @@ targeting_criteria_item_assignment | item assignments for targeting
 
 ### AF-IB
 
+Subject Tables
+
+Nightly Table | On-Demand(OD) Table | Description
+------|-------------|--------------
+d_forecast_portfolio | d_od_forecast_portfolio | -
+d_forecast_portfolio_dimension_item_assignment | d_od_forecast_portfolio_dimension_item_assignment | -
+d_ad_tree_node | d_od_ad_tree_node | targeted ad units
+d_placement | d_od_placement | PlacementNode of target portfolio
+d_ad_unit | - | -
+
 Dimensional Type v.s. AF-IB tables
 
 Dimension Type ID | Name |  Dimension Table
@@ -90,6 +100,10 @@ Dimension Type ID | Name |  Dimension Table
 131 | Nielsen DAR| d_lu_nielsen_demographic
 
 Fact Tables
+
+Table|Description
+-----|-----------
+
 
 ## Dataflow
 
