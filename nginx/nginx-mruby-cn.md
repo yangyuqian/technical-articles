@@ -115,3 +115,7 @@ mruby脚本时默认会重新加载新的逻辑.
 [Mruby Module for Nginx](http://ngx.mruby.org/)
 
 [Emiller's Guide To Nginx Module Development](http://www.evanmiller.org/nginx-modules-guide.html)
+
+[ngx_mruby用户手册](https://github.com/matsumoto-r/ngx_mruby/wiki/Use-Case)
+
+[Supported Directives](https://github.com/matsumoto-r/ngx_mruby/wiki/Directives)
