@@ -15,4 +15,4 @@ Nginx
 * MRuby Interface for Nginx Shared Memory(cn, TODO)
 
 VIM
-* [Getting Started to VIM]()
+* [Getting Started to VIM(English)](vim/vim-startup-en.md)
