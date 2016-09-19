@@ -22,7 +22,38 @@
 
 ## 打包新的nginx
 
-## 自定义mruby的gem
+Nginx 1.9.11引入了动态模块，之前的版本都是需要把module和nginx源码编译成一个二进制文件.
+本文出于工程上动态模块目前还不成熟，只介绍后者.
+
+本文所使用的nginx为`1.9.5`，[mruby module](https://github.com/matsumoto-r/ngx_mruby)版本为`v1.18.4`.
+
+```
+# nginx源码目录 $NGINX_SRC
+# ngx_mruby源码目录 $NGX_MRUBY_SRC
+
+cd ${NGX_MRUBY_SRC}
+./configure --with-ngx-src-root=${NGINX_SRC}
+make build_mruby
+make generate_gems_config
+cd ${NGINX_SRC}
+./configure --prefix=/usr/local/nginx --add-module=${NGX_MRUBY_SRC} --add-module=${NGX_MRUBY_SRC}/dependence/ngx_devel_kit
+make
+```
+
+注意这里加的 `--prefix=/usr/local/nginx` 意味着以后只能将配置文件放在`/usr/local/nginx/conf`下.
+
+生成的Nginx二进制文件位于`$NGINX_SRC/objs/nginx`. 以下是一些常用命令：
+
+```
+# 启动Nginx
+$NGINX_SRC/objs/nginx
+# 停止Nginx
+$NGINX_SRC/objs/nginx -s stop
+# Reload Nginx
+$NGINX_SRC/objs/nginx -s reload
+```
+
+## 扩展Nginx功能
 
 # 参考文献
 
