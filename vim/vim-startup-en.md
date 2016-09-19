@@ -29,7 +29,7 @@ Read the conventions(default VIM configurations) before you start playing with V
 
 ## Conventions
 
-![Lead Key](https://github.com/yangyuqian/technical-articles/blob/master/images/lead-key.jpg)
+![Lead Key](images/lead-key.jpg)
 
 ## Basic
 
