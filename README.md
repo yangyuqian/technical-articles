@@ -15,6 +15,7 @@ TODO
 Nginx
 * [MRuby Extention(Chinese)](nginx/nginx-mruby-cn.md)
 * Nginx Concurrency Model(cn, TODO)
+* Nginx Module Development(cn, TODO)
 * MRuby Interface for Nginx Shared Memory(cn, TODO)
 
 VIM
