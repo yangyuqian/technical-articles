@@ -110,12 +110,6 @@ http {
 值得注意的是，配置文件中`mruby_init $location_of_your_mruby_script`在每次修改了
 mruby脚本时默认会重新加载新的逻辑.
 
-## 局限性
-
-1. [MRuby Module](https://github.com/matsumoto-r/ngx_mruby)目前还没有
-`Shared Memory Segment`支持，当Nginx以多个`Worker Processes`模式启动时，
-需要外接Redis或数据库，带来比较大的性能开销.
-
 # 参考文献
 
 [Mruby Module for Nginx](http://ngx.mruby.org/)
