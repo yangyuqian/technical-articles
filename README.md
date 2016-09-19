@@ -10,7 +10,7 @@ Go
 * [Vendoring(Chinese)](go/vendoring-cn.md)
 
 Nginx
-* [MRuby Extention(Chinese)](nginx/nginx-mruby-cn.md)(Doing)
+* [MRuby Extention(Chinese)](nginx/nginx-mruby-cn.md)
 * Nginx Concurrency Model(cn, TODO)
 * MRuby Interface for Nginx Shared Memory(cn, TODO)
 
