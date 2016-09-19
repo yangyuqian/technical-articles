@@ -80,10 +80,41 @@ conf.gem './mrbgems/ngx_mruby_mrblib'
 conf.gem './mrbgems/rack-based-api'
 ```
 
-最后需要注意的是：修改配置重新编译Nginx时，应该把`$NGX_MRUBY_SRC`和`$NGINX_SRC`下编译期间动态生成
-的文件全部清除，以免应用了cache，带来不必要的麻烦.
+最后需要注意的是：修改配置重新编译Nginx时，应该把`$NGX_MRUBY_SRC`和`$NGINX_SRC`
+下编译期间动态生成的文件全部清除，以免应用了cache，带来不必要的麻烦.
+
+编译Nginx成功后，就可以在配置文件中嵌入一些MRuby脚本来方便地扩展Nginx功能.
 
 ## 扩展Nginx功能
+
+这里的`扩展Nginx功能`指在Nginx的状态机的生命周期中嵌入一些额外的mruby脚本来实现
+额外的功能, 如负载均衡和限流等.
+
+Nginx在请求处理中支持stream(websocket, 静态文件等), http, mail处理，
+本节以http请求的限流扩展为例来介绍([Supported Directives](https://github.com/matsumoto-r/ngx_mruby/wiki/Directives)).
+
+```
+http {
+  # ...
+  # 启动阶段做可以初始化变量，比如公有的锁等
+  mruby_init $location_of_your_mruby_script;
+  # 请求到来处理阶段，如果是反向代理配置，这个阶段在转发之前
+  mruby_access_handler $location_of_your_mruby_script;
+  # ...
+}
+```
+
+上面的例子在`初始化配置`（stop/reload/start）和`请求到来`时扩展nginx的功能, 
+具体的例子见 [ngx_mruby用户手册](https://github.com/matsumoto-r/ngx_mruby/wiki/Use-Case)
+
+值得注意的是，配置文件中`mruby_init $location_of_your_mruby_script`在每次修改了
+mruby脚本时默认会重新加载新的逻辑.
+
+## 局限性
+
+1. [MRuby Module](https://github.com/matsumoto-r/ngx_mruby)目前还没有
+`Shared Memory Segment`支持，当Nginx以多个`Worker Processes`模式启动时，
+需要外接Redis或数据库，带来比较大的性能开销.
 
 # 参考文献
 
