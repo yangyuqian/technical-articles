@@ -18,7 +18,7 @@
 
 主要分为：
 * 打包新的nginx
-* 自定义mruby的gem
+* 扩展Nginx功能
 
 ## 打包新的nginx
 
@@ -52,6 +52,36 @@ $NGINX_SRC/objs/nginx -s stop
 # Reload Nginx
 $NGINX_SRC/objs/nginx -s reload
 ```
+
+[mruby module](https://github.com/matsumoto-r/ngx_mruby) 已经默认加入了一些MRuby Gems,
+可以通过修改`$NGX_MRUBY_SRC/build_config.rb`来增/删一些功能.
+
+```
+# $NGX_MRUBY_SRC/build_config.rb
+conf.gem :github => 'iij/mruby-io'
+conf.gem :github => 'iij/mruby-env'
+conf.gem :github => 'iij/mruby-dir'
+conf.gem :github => 'iij/mruby-digest'
+conf.gem :github => 'iij/mruby-process'
+conf.gem :github => 'iij/mruby-pack'
+conf.gem :github => 'iij/mruby-socket'
+conf.gem :github => 'mattn/mruby-json'
+conf.gem :github => 'mattn/mruby-onig-regexp'
+conf.gem :github => 'matsumoto-r/mruby-redis'
+conf.gem :github => 'matsumoto-r/mruby-vedis'
+conf.gem :github => 'matsumoto-r/mruby-sleep'
+conf.gem :github => 'matsumoto-r/mruby-userdata'
+conf.gem :github => 'matsumoto-r/mruby-uname'
+conf.gem :github => 'matsumoto-r/mruby-mutex'
+conf.gem :github => 'matsumoto-r/mruby-localmemcache'
+
+# ngx_mruby extended class
+conf.gem './mrbgems/ngx_mruby_mrblib'
+conf.gem './mrbgems/rack-based-api'
+```
+
+最后需要注意的是：修改配置重新编译Nginx时，应该把`$NGX_MRUBY_SRC`和`$NGINX_SRC`下编译期间动态生成
+的文件全部清除，以免应用了cache，带来不必要的麻烦.
 
 ## 扩展Nginx功能
 
