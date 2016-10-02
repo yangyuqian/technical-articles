@@ -10,11 +10,14 @@ import (
 
 var balance int
 var transactionNo int
+var mutex *sync.Mutex
 
 func main() {
 	rand.Seed(time.Now().Unix())
 	runtime.GOMAXPROCS(2)
 	var wg sync.WaitGroup
+	mutex = new(sync.Mutex)
+
 	balance = 1000
 	transactionNo = 0
 	fmt.Println("Starting balance: $", balance)
@@ -31,6 +34,7 @@ func main() {
 }
 
 func transaction(amt int) bool {
+	mutex.Lock()
 	approved := false
 	if (balance - amt) < 0 {
 		approved = false
@@ -38,8 +42,8 @@ func transaction(amt int) bool {
 	} else {
 		approved = true
 		balance = balance - amt
-
 	}
+
 	approvedText := "declined"
 	if approved == true {
 		approvedText = "approved"
@@ -50,6 +54,6 @@ func transaction(amt int) bool {
 	transactionNo = transactionNo + 1
 	fmt.Println(transactionNo, "Transaction for $", amt, approvedText)
 	fmt.Println("\tRemaining balance $", balance)
+	mutex.Unlock()
 	return approved
-
 }
