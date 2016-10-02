@@ -6,8 +6,11 @@ import (
 
 func main() {
 	wg := new(sync.WaitGroup)
-
 	wg.Add(1)
-	wg.Done()
+
+	go func(signal *sync.WaitGroup) {
+		signal.Done()
+	}(wg)
+
 	wg.Wait()
 }
