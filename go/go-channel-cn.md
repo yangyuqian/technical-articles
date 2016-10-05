@@ -118,6 +118,10 @@ v := reflect.ValueOf(i)
 t := reflect.TypeOf(i)
 ```
 
+# close channel
+
+TODO
+
 # send message
 
 TODO
