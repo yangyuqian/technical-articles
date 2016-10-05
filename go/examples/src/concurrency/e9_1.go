@@ -1,9 +1,3 @@
-Go并发的测试和日志
-----------------------
-
-例9.1 `concurrency/e9_1.go`介绍了Go里面的异常处理
-
-```
 package main
 
 func main() {
@@ -15,5 +9,3 @@ func main() {
 
 	panic("hello, recover")
 }
-```
-
