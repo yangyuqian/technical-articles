@@ -44,7 +44,7 @@ func reflect_makechan(t *chantype, size int64) *hchan {
 ```
 
 最终返回一个`*hchan`类型，可见`make`出来的`channel`对象确实是一个指针.
-`hchan`保存了一个`channel`实例必须的信息.
+`hchan`保存了一个`channel`实例必须的信息. 里面的参数后面会详细说到.
 
 ```
 // src/runtime/chan.go#L25
