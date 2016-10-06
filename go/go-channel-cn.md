@@ -217,12 +217,63 @@ func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
 如果是`non-buffer channel`，情况比较简单，但如果是`buffered channel`呢？
 假设某个时间点，同时有一个`reciever`就绪，并且这个时候`sender`发送了数据，
 按照`chansend`的实现，会不会出现`reciever`接收到的是当前发送的数据，
-而不是队首的数据？答案是“不会”，因为dequeue其实就保证了，只要reciever入队，
-就说明当前的`buffer`应该是空的，具体会在`reciever`实现中介绍.
+而不是队首的数据？答案是“不会”，单纯从`sender`来看，的确会出现这种情况，
+但`reciever`会检查`buffer`的状态，如果已经有数据，那么就会把收到的数据写到
+`buffer`的队尾，然后从队头获取数据.
 
 # recieve from channel
 
-TODO
+入口函数：
+
+```
+// src/runtime/chan.go#L377
+func chanrecv1(t *chantype, c *hchan, elem unsafe.Pointer) {
+	chanrecv(t, c, elem, true)
+}
+```
+
+`chanrecv`的实现：
+
+```
+// src/runtime/chan.go#L393
+func chanrecv(t *chantype, c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) {
+  // 初始化，处理基本校验
+
+  // 处理channel临界状态，reciever在接收之前要保证channel是就绪的
+	if !block && (c.dataqsiz == 0 && c.sendq.first == nil ||
+		c.dataqsiz > 0 && atomic.Loaduint(&c.qcount) == 0) &&
+		atomic.Load(&c.closed) == 0 {
+		return
+	}
+
+  // ...
+
+  // 如果recieve数据的时候，发现channel关闭了，
+  // 直接返回channel type的zero value
+	if c.closed != 0 && c.qcount == 0 {
+    // ...
+		if ep != nil {
+			memclr(ep, uintptr(c.elemsize))
+		}
+		return true, false
+	}
+
+  // 从sender阻塞队首获取sender，接收数据
+  // 如果buffer为空，直接获取sender的数据，否则把sender的数据加到buffer
+  // 队尾，然后从buffer队首获取数据
+	if sg := c.sendq.dequeue(); sg != nil {
+		recv(c, sg, ep, func() { unlock(&c.lock) })
+		return true, true
+	}
+
+  // 如果当前没有pending的sender，且buffer里有数据，直接从buffer里面拿数据
+	if c.qcount > 0 {
+    // ...
+	}
+
+  // buffer里面没有数据，也没有阻塞的sender，就阻塞reciver
+}
+```
 
 # close channel
 
