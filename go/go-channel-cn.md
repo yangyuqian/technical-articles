@@ -54,24 +54,18 @@ func reflect_makechan(t *chantype, size int64) *hchan {
 ```
 // src/runtime/chan.go#L25
 type hchan struct {
-	qcount   uint           // total data in the queue
-	dataqsiz uint           // size of the circular queue
-	buf      unsafe.Pointer // points to an array of dataqsiz elements
-	elemsize uint16
-	closed   uint32
-	elemtype *_type // element type
-	sendx    uint   // send index
-	recvx    uint   // receive index
-	recvq    waitq  // list of recv waiters
-	sendq    waitq  // list of send waiters
+	qcount   uint           // buffer中数据总数
+	dataqsiz uint           // buffer的容量
+	buf      unsafe.Pointer // buffer的开始指针
+	elemsize uint16         // channel中数据的大小
+	closed   uint32         // channel是否关闭，0 => false，其他都是true
+	elemtype *_type         // channel数据类型
+	sendx    uint           // buffer中正在send的element的index
+	recvx    uint           // buffer中正在recieve的element的index
+	recvq    waitq          // 接收者等待队列
+	sendq    waitq          // 发送者等待队列
 
-	// lock protects all fields in hchan, as well as several
-	// fields in sudogs blocked on this channel.
-	//
-	// Do not change another G's status while holding this lock
-	// (in particular, do not ready a G), as this can deadlock
-	// with stack shrinking.
-	lock mutex
+	lock     mutex          // 互斥锁
 }
 ```
 
