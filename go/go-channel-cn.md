@@ -1,6 +1,11 @@
 Go Channel源码分析
 ---------------------
 
+传统意义上的并发编程，需要直接共享内存，这给并发模型带来了额外的复杂度.
+
+`Goroutine`本质上也是多线程模型，让Go变得特别的地方就是`channel`，
+采用消息模型避免直接的内存共享，降低了信息处理的复杂度.
+
 注意：**本文所有的源码分析基于Go1.6.2，版本不同实现可能会有出入**
 
 `Channel`是Go中一种特别的数据结构，它不像普通的类型一样，强调传值还是指针；
@@ -120,7 +125,89 @@ t := reflect.TypeOf(i)
 
 # send message
 
-TODO
+初始化`channel`之后就可以向`channel`中写数据，准确的说，应该是发送数据.
+
+入口函数：
+
+```
+// src/runtime/chan.go#L106
+func chansend1(t *chantype, c *hchan, elem unsafe.Pointer) {
+	chansend(t, c, elem, true, getcallerpc(unsafe.Pointer(&t)))
+}
+```
+
+核心逻辑都在`chansend`中实现，注意这里的`block:bool`参数始终为`true`:
+
+```
+// src/runtime/chan.go#L122
+func chansend(t *chantype, c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
+  // 初始化，异常校验和处理
+
+  // 处理channel的临界状态，既没有被close，又不能正常接收数据
+	if !block && c.closed == 0 && ((c.dataqsiz == 0 && c.recvq.first == nil) ||
+		(c.dataqsiz > 0 && c.qcount == c.dataqsiz)) {
+		return false
+	}
+
+	var t0 int64
+	if blockprofilerate > 0 {
+		t0 = cputicks()
+	}
+
+  // 对同一个channel的操作是串行的
+	lock(&c.lock)
+
+  // 向一个已经被close的channel写数据，会panic
+	if c.closed != 0 {
+		unlock(&c.lock)
+		panic(plainError("send on closed channel"))
+	}
+
+  // 这是一个不阻塞的处理，如果已经有接收者，
+  // 就向第一个接收者发送当前enqueue的消息.
+  // return true就是说发送成功了，写入buffer也算是成功
+	if sg := c.recvq.dequeue(); sg != nil {
+    // 发送的实现本质上就是在不同线程的栈上copy数据
+		send(c, sg, ep, func() { unlock(&c.lock) })
+		return true
+	}
+
+	if c.qcount < c.dataqsiz {
+    // 把发送的数据写入buffer，更新buffer状态，返回成功
+	}
+
+  // 如果buffer满了，或者non-buffer（等同于buffer满了），
+  // 阻塞sender并更新一些栈的状态，
+  // 唤醒线程的时候还会重新检查channel是否打开状态，否则panic
+}
+```
+
+再看`send`的实现:
+
+```
+// src/runtime/chan.go#L122
+func send(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func()) {
+	if sg.elem != nil {
+    // 直接把要发送的数据copy到reciever的栈空间
+		sendDirect(c.elemtype, sg, ep)
+		sg.elem = nil
+	}
+
+  // 等待reciever就绪，如果reciever还没准备好就阻塞sender一段时间
+}
+```
+
+`sendDirect`的实现：
+
+```
+// src/runtime/chan.go#L284
+func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
+  // 直接拷贝数据
+	dst := sg.elem
+	memmove(dst, src, t.size)
+	typeBitsBulkBarrier(t, uintptr(dst), t.size)
+}
+```
 
 # recieve message
 
