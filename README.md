@@ -8,7 +8,7 @@ List of Contents
 
 Go
 * [Vendoring(Chinese)](go/vendoring-cn.md)
-* [Implementation of Channel(Chinese)](go/go-channel-implementation-cn.md)
+* [Implementation of Channel(Chinese)](go/channel-implementation-cn.md)
 
 Docker
 
