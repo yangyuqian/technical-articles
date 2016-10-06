@@ -277,4 +277,26 @@ func chanrecv(t *chantype, c *hchan, ep unsafe.Pointer, block bool) (selected, r
 
 # close channel
 
-TODO
+入口函数：
+
+```
+// src/runtime/chan.go#L303
+func closechan(c *hchan) {
+  // 关闭channel之前必须已经初始化
+
+  // 检查channel状态，不能重复关闭channel
+
+  // ...
+
+  // 将closed置为1，标志channel已经关闭
+	c.closed = 1
+
+  // ...
+
+  // 先释放所有的reciever/reader
+
+  // 然后释放所有的sender/writer，在sender端会panic
+
+  // ...
+}
+```
