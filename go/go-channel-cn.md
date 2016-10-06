@@ -123,7 +123,7 @@ v := reflect.ValueOf(i)
 t := reflect.TypeOf(i)
 ```
 
-# send message
+# send to channel
 
 初始化`channel`之后就可以向`channel`中写数据，准确的说，应该是发送数据.
 
@@ -220,7 +220,7 @@ func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
 而不是队首的数据？答案是“不会”，因为dequeue其实就保证了，只要reciever入队，
 就说明当前的`buffer`应该是空的，具体会在`reciever`实现中介绍.
 
-# recieve message
+# recieve from channel
 
 TODO
 
