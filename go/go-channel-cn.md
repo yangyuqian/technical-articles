@@ -209,6 +209,17 @@ func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
 }
 ```
 
+`channel send`主要就是做了2件事情：
+
+* 如果没有可用的`reciever`，数据入队（如果有buffer），否则线程阻塞
+* 如果有可用的`reciever`，就把数据从`sender`的栈空间拷贝到`reciever`的栈空间
+
+如果是`non-buffer channel`，情况比较简单，但如果是`buffered channel`呢？
+假设某个时间点，同时有一个`reciever`就绪，并且这个时候`sender`发送了数据，
+按照`chansend`的实现，会不会出现`reciever`接收到的是当前发送的数据，
+而不是队首的数据？答案是“不会”，因为dequeue其实就保证了，只要reciever入队，
+就说明当前的`buffer`应该是空的，具体会在`reciever`实现中介绍.
+
 # recieve message
 
 TODO
