@@ -208,13 +208,6 @@ func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
 * 如果没有可用的`reciever`，数据入队（如果有buffer），否则线程阻塞
 * 如果有可用的`reciever`，就把数据从`sender`的栈空间拷贝到`reciever`的栈空间
 
-如果是`non-buffer channel`，情况比较简单，但如果是`buffered channel`呢？
-假设某个时间点，同时有一个`reciever`就绪，并且这个时候`sender`发送了数据，
-按照`chansend`的实现，会不会出现`reciever`接收到的是当前发送的数据，
-而不是队首的数据？答案是“不会”，单纯从`sender`来看，的确会出现这种情况，
-但`reciever`会检查`buffer`的状态，如果已经有数据，那么就会把收到的数据写到
-`buffer`的队尾，然后从队头获取数据.
-
 # recieve from channel
 
 入口函数：
