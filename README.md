@@ -8,6 +8,7 @@ List of Contents
 
 Go
 * [Vendoring(Chinese)](go/vendoring-cn.md)
+* [Channel(Chinese)](go/go-channel-cn.md)
 
 Docker
 TODO
