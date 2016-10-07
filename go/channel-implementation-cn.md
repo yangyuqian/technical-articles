@@ -81,7 +81,7 @@ func makechan(t *chantype, size int64) *hchan {
 	if elem.kind&kindNoPointers != 0 || size == 0 {
 		// 从内存分配器请求一段内存
     c = (*hchan)(mallocgc(hchanSize+uintptr(size)*elem.size, nil, true))
-    // 如果是无指针类型，并且制定了buffer size
+    // 如果是无指针类型，并且指定了buffer size
 		if size > 0 && elem.size != 0 {
 			c.buf = add(unsafe.Pointer(c), hchanSize)
 		} else {
