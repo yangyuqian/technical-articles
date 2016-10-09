@@ -11,6 +11,12 @@ Go
 * [Implementation of Channel(Chinese)](go/channel-implementation-cn.md)
 * [Usage of Channel(Chinese)](go/channel-usage-cn.md)
 
+Ruby
+* [Rails Class Loader(Chinese)](https://github.com/yangyuqian/ruby-articles/blob/master/RAILS-CLASS-LOADER.md)
+
+Assembly
+* [Intel i7 Assembly](asm/unix-mac-intel-i7-cn.md)
+
 Docker
 
 TODO
@@ -23,5 +29,3 @@ Nginx
 VIM
 * [Getting Started to VIM(English)](vim/vim-startup-en.md)
 
-Ruby
-* [Rails Class Loader(Chinese)](https://github.com/yangyuqian/ruby-articles/blob/master/RAILS-CLASS-LOADER.md)
