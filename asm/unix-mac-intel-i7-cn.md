@@ -5,4 +5,49 @@
 具体的系统架构和操作系统都不重要，不同系统架构带来的无非是指令集和寄存器等差异，
 最终程序的本质都是一样的.
 
+字节定义
+
+```
+a byte as 8 bits, a word as 16 bits,
+a double word as 32 bits, a quadword as 64 bits,
+and a double quadword as 128 bits.
+```
+
+Intel数据存储方式
+
+```
+Intel stores bytes "little endian,"
+meaning lower significant bytes are stored in lower memory addresses.
+```
+
+Intel i7寄存器
+
+1. 64 bits
+
+RAX, RBX, RCX, RDX, RBP, RSI, RDI, RSP, R8~R15. 共16个64bits寄存器;
+
+对于前面8个：RAX, RBX, RCX, RDX, RBP, RSI, RDI, RSP
+
+如果R改成E，比如RAX - EAX，就可以访问低32bits;
+还可以把前面的R去掉，比如RAX - AX，访问低16bits; AL访问RAX的低8bits;
+AX的高8bits可以用AH访问;
+
+对于后面8个新寄存器：R8 - R15
+
+如 R8, R8 (64bits), R8D (低32bits), R8W (低16bits), R8B (低8bits)
+
+还有一个64bits的寄存器RIP，充当PC（程序计数器），存放下一条指令的地址
+
+还有RSP存放栈顶; RFLAGS存放判断结果.
+
+2. FPU(floating pointing unit)
+
+The floating point unit (FPU) contains eight registers FPR0-FPR7
+
+Single Instruction Multiple Data (SIMD) instructions execute a single command
+on multiple pieces of data in parallel and are a common usage for assembly
+routines. MMX and SSE commands (using the MMX and XMM registers respectively)
+support SIMD operations, which perform an instruction on up to eight pieces of
+data in parallel.
+For example, eight bytes can be added to eight bytes in one instruction using MMX.
 
