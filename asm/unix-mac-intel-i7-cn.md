@@ -51,3 +51,9 @@ support SIMD operations, which perform an instruction on up to eight pieces of
 data in parallel.
 For example, eight bytes can be added to eight bytes in one instruction using MMX.
 
+
+# References
+
+[Intel i7 Assembly](https://software.intel.com/en-us/articles/introduction-to-x64-assembly)
+
+[Say hello to x64 Assembly](http://0xax.blogspot.ca/2014/08/say-hello-to-x64-assembly-part-1.html)
