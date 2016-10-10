@@ -51,9 +51,38 @@ support SIMD operations, which perform an instruction on up to eight pieces of
 data in parallel.
 For example, eight bytes can be added to eight bytes in one instruction using MMX.
 
+本文基于MACOS 10.10，汇编器用`nasm`:
+
+```
+$ nasm -v
+NASM version 2.12.01 compiled on Mar 23 2016
+```
+
+一定要保证`nasm`用比较新的版本，老版本可能不支持64bits汇编的编译.
+
+# 实例介绍
+
+例1: `examples/e1.asm` 是`Hello World`程序，向console输出一段字符，
+通过如下命令来编译，检查编译环境是否满足要求：
+
+```
+// 生成Object文件
+$ nasm -f macho64 -o build/e1.o examples/e1.asm
+// 生成可执行文件
+$ ld -o build/e1 -e _main build/e1.o
+// 运行可执行文件
+$ ./build/e1
+
+Hello, World!
+```
+
+
+
 
 # References
 
 [Intel i7 Assembly](https://software.intel.com/en-us/articles/introduction-to-x64-assembly)
 
 [Say hello to x64 Assembly](http://0xax.blogspot.ca/2014/08/say-hello-to-x64-assembly-part-1.html)
+
+[Examples](https://github.com/0xAX/asm)
