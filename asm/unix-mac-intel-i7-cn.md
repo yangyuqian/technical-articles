@@ -76,6 +76,23 @@ $ ./play/e1
 Hello, World!
 ```
 
+也可以通过`build.sh`来编译和运行例子：
+
+```
+# 编译但不运行e1
+$ sh build.sh e1 # e1也可以是e1.asm
+
+Executable of e1 is located at /Users/yangyuqian/code/technical-articles/asm/play/e1
+
+# 编译并运行e1
+$ sh build.sh e1 exec
+
+=============== Run example e1 ==============
+
++ /Users/yangyuqian/code/technical-articles/asm/play/e1
+Hello, World!
+```
+
 
 
 
