@@ -5,7 +5,9 @@ echo 'Usage: sh build.sh <example>
 
 Example:
 $ sh build.sh e1
-  Compile examples/e1.asm and put the executable at paly/e1'
+  To compile examples/e1.asm and put the executable at play/e1
+$ sh build.sh e1 exec
+  To compile and execute the example'
 }
 
 if [ -z "$1" ]; then
