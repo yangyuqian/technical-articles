@@ -32,7 +32,7 @@ In little-endian the least significant byte has the smallest address:
 3 AA
 ```
 
-Intel i7寄存器
+**Intel i7寄存器**
 
 1. 64 bits
 
@@ -62,6 +62,8 @@ routines. MMX and SSE commands (using the MMX and XMM registers respectively)
 support SIMD operations, which perform an instruction on up to eight pieces of
 data in parallel.
 For example, eight bytes can be added to eight bytes in one instruction using MMX.
+
+**NASM汇编**
 
 本文基于MACOS 10.10，汇编器用`nasm`:
 
@@ -161,6 +163,33 @@ realarray       resq    10              ; array of ten reals
 ymmval:         resy    1               ; one YMM register
 zmmvals:        resz    32              ; 32 ZMM registers
 ```
+
+然后看`text section`, 正式进入代码逻辑：
+
+```
+SECTION .text
+// 声明入口是_main
+global _main
+
+// 定义一个函数
+kernel:
+    syscall
+    ret
+
+// 程序入口函数
+_main:
+    mov rax,0x2000004
+    mov rdi,1
+    mov rsi,msg
+    mov rdx,len
+    call kernel
+
+    mov rax,0x2000001
+    mov rdi,0
+    call kernel
+```
+
+
 
 # References
 
