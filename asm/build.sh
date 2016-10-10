@@ -37,7 +37,9 @@ fmt=macho64
 asmpath=${CUR_DIR}/examples/${asm}.asm
 exe=${CUR_DIR}/play/$asm
 entry='_main'
+play=${CUR_DIR}/play
 
+rm -rf ${play}/${asm}*
 nasm -f $fmt -o $obj $asmpath
 ld -o $exe -e $entry $obj
 
