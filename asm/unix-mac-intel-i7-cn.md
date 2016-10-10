@@ -104,7 +104,7 @@ $ sh build.sh e1 exec
 Hello, World!
 ```
 
-# 实例介绍
+# Hello World
 
 例1: `examples/e1.asm` 是`Hello World`程序，向console输出一段字符
 
