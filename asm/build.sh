@@ -25,6 +25,7 @@ asm="$1"
 # remove the .asm suffix
 asm=`echo $asm|sed -e "s/\.asm//g"`
 
+# exit if file missing
 if [ ! -f "$CUR_DIR/examples/${asm}.asm" ]; then
   echo "Example $asm not found ..."
   exit 1
