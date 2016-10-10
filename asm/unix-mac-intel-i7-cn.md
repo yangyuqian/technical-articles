@@ -20,6 +20,18 @@ Intel stores bytes "little endian,"
 meaning lower significant bytes are stored in lower memory addresses.
 ```
 
+Little-endian - we can imagine memory as one large array. It contains bytes.
+Each address stores one element of the memory “array”.
+Each element is one byte. For example we have 4 bytes: AA 56 AB FF.
+In little-endian the least significant byte has the smallest address:
+
+```
+0 FF
+1 AB
+2 56
+3 AA
+```
+
 Intel i7寄存器
 
 1. 64 bits
@@ -60,9 +72,8 @@ NASM version 2.12.01 compiled on Mar 23 2016
 
 一定要保证`nasm`用比较新的版本，老版本可能不支持64bits汇编的编译.
 
-# 实例介绍
+本文中所有的例子都按照`e${order}`的格式编号，比如例1，文件就是`examples/e1.asm`.
 
-例1: `examples/e1.asm` 是`Hello World`程序，向console输出一段字符，
 通过如下命令来编译，检查编译环境是否满足要求：
 
 ```
@@ -93,8 +104,63 @@ $ sh build.sh e1 exec
 Hello, World!
 ```
 
+# 实例介绍
 
+例1: `examples/e1.asm` 是`Hello World`程序，向console输出一段字符
 
+每个汇编程序都可以有3个`section`:
+
+* `data`: 数据段, 用来存放常量
+* `text`: 代码段
+* `bss`: 用来存放程序中未初始化的全局变量的一块内存区域
+
+首先看`data section`:
+
+```
+// 声明下面的代码都在数据段中
+SECTION .data
+// 定义变量
+msg: db "Hello, World!", 0x0a
+len: equ $-msg
+```
+
+说到常量的定义：
+
+```
+SECTION .data
+
+// const1 = 100
+const1: equ 100
+```
+
+那么上面的`db` `equ`是什么意思呢？这是`nasm`支持的 [pseudo-instructions](http://www.nasm.us/doc/nasmdoc3.html).
+
+```
+db    0x55                ; just the byte 0x55
+db    0x55,0x56,0x57      ; three bytes in succession
+db    'hello',13,10,'$'   ; so are string constants
+dw    0x1234              ; 0x34 0x12
+dw    'ab'                ; 0x61 0x62 (character constant)
+```
+
+所以上面的 `msg: db "xxx", 0x0a` 就是简单的定义了一个字符串常量.
+
+用`$-data`可以获取`data`的数据长度，所以`len: equ $-msg`就定义了`len=len(msg)`.
+
+```
+message         db      'hello, world'
+msglen          equ     $-message
+```
+
+还可以定义没有初始化的常量:
+
+```
+buffer:         resb    64              ; reserve 64 bytes
+wordvar:        resw    1               ; reserve a word
+realarray       resq    10              ; array of ten reals
+ymmval:         resy    1               ; one YMM register
+zmmvals:        resz    32              ; 32 ZMM registers
+```
 
 # References
 
@@ -103,3 +169,5 @@ Hello, World!
 [Say hello to x64 Assembly](http://0xax.blogspot.ca/2014/08/say-hello-to-x64-assembly-part-1.html)
 
 [Examples](https://github.com/0xAX/asm)
+
+[NASM Assembly](http://www.nasm.us/doc/nasmdoc3.html)
