@@ -30,3 +30,23 @@ if [ ! -f "$CUR_DIR/examples/${asm}.asm" ]; then
   echo "Example $asm not found ..."
   exit 1
 fi
+
+# generate object files
+obj=$CUR_DIR/play/${asm}.o
+fmt=macho64
+asmpath=${CUR_DIR}/examples/${asm}.asm
+exe=${CUR_DIR}/play/$asm
+entry='_main'
+
+nasm -f $fmt -o $obj $asmpath
+ld -o $exe -e $entry $obj
+
+case "$2" in
+exec)
+echo "\n\n=============== Run example $asm ==============\n\n"
+set -x
+$exe
+;;
+*)
+  echo 'Executable of '${asm}' is located at '$exe
+esac
