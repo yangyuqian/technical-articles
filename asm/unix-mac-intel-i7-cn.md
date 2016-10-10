@@ -68,7 +68,7 @@ NASM version 2.12.01 compiled on Mar 23 2016
 ```
 // 生成Object文件
 $ nasm -f macho64 -o build/e1.o examples/e1.asm
-// 生成可执行文件
+// 生成可执行文件，这里加上-e _main是因为nasm默认的入口函数的_start
 $ ld -o build/e1 -e _main build/e1.o
 // 运行可执行文件
 $ ./build/e1
