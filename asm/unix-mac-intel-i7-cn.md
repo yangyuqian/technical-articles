@@ -178,13 +178,19 @@ kernel:
 
 // 程序入口函数
 _main:
+    // 表明当前syscall是写I/O操作
     mov rax,0x2000004
+    // 表明当前写stdout
     mov rdi,1
+    // 数据入口地址写入rsi
     mov rsi,msg
+    // 数据长度写入rdx
     mov rdx,len
     call kernel
 
+    // 表明当前系统调用是exit
     mov rax,0x2000001
+    // exit的时候返回0，等价于`exit 0`
     mov rdi,0
     call kernel
 ```
@@ -200,3 +206,5 @@ _main:
 [Examples](https://github.com/0xAX/asm)
 
 [NASM Assembly](http://www.nasm.us/doc/nasmdoc3.html)
+
+[Making system calls from Assembly in Mac OS X](https://filippo.io/making-system-calls-from-assembly-in-mac-os-x/)
