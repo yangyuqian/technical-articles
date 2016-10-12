@@ -195,6 +195,8 @@ _main:
     call kernel
 ```
 
+在MAC中系统调用的标志比较有意思，需要把具体的值加上`0x2000000`.
+
 
 
 # References
