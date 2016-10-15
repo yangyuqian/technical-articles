@@ -35,9 +35,9 @@ _main:
 	add r10, r11
 	;; rax = r10
 	mov rax, r10
-
-
-	call _exit
+	;; r12 = 0
+	xor r12, r12
+	jmp _num_to_str
 
 ;; transform str to number
 _str_to_num:
@@ -76,12 +76,23 @@ _num_to_str:
 	cmp rax, 0x0
 	jne _num_to_str
 	;; TODO: print the result
-	;; TODO
+	jmp print
 
 _wrong_argc:
 	mov rsi, WRONG_ARGC
 	mov rdx, LEN_WONG_ARGC
 	jmp _print
+
+print:
+	;; calculate and set the content length to rdx
+	mov rax, 1
+	mul r12
+	mov r12, 8
+	mul r12
+	mov rdx, rax
+	mov rsi, rsp
+	jmp _print
+
 
 ;; print a str to console
 ;; RSI will keep the msg
@@ -91,7 +102,6 @@ _print:
 	mov rdi, STD_OUT
 	;; mov rsi, MSG_DATA
 	syscall
-	jmp _exit
 
 _exit:
 	mov rax, SYS_EXIT
