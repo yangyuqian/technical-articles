@@ -56,9 +56,9 @@ _main:
 ;;
 argcError:
 	;; sys_write syscall
-	mov	rax, 1
+	mov	rax, SYS_WRITE
 	;; file descritor, standard output
-	mov	rdi, 1
+	mov	rdi, STD_IN
 	;; message address
 	mov	rsi, WRONG_ARGC
 	;; length of message
