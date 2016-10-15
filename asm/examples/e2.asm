@@ -1,110 +1,169 @@
-SECTION .data
+section .data
+	SYS_WRITE: equ 0x2000004
+	STD_IN:    equ 1
+	SYS_EXIT:  equ 0x2000001
+	EXIT_CODE: equ 0
 
-SYS_WRITE: equ 0x2000004
-SYS_EXIT: equ 0x2000001
-STD_OUT: equ 1
-EXIT_CODE: equ 1
-NEW_LINE: equ 0xa
-WRONG_ARGC: db "Must be two command line argument", 0xa
-LEN_WONG_ARGC: equ $-WRONG_ARGC
+	NEW_LINE: db 0xa
+	WRONG_ARGC: db "Must be two command line argument", 0xa
 
-SECTION .text
-global _main
+section .text
+	global	_main
 
 _main:
-	;; get argc by pop top of stack to RCX
-	;; it can be pop to any 64 bit register, i.e
-	;; pop rax
-	pop rcx
-	;; if argc != 3, jmp to _wrong_argc
-	;; argc = 3 means there are 2 args
-	cmp rcx, 3
-	jne _wrong_argc
-	;; get arg[0]
-	add rsp, 8
-	pop rsi
-	;; args[0].to_numbder
-	call _str_to_num
-	;; number stored in rax
-	mov r10, rax
-	;; args[1].to_numbder
-	pop rsi
-	call _str_to_num
-  mov r11, rax
-	;; args[0] + args[1]
-	add r10, r11
-	;; rax = r10
-	mov rax, r10
-	;; r12 = 0
-	xor r12, r12
-	jmp _num_to_str
+	;; rcx - argc
+	pop	rcx
 
-;; transform str to number
-_str_to_num:
-  ;; set rax to 0
-	xor rax, rax
-	mov rcx, 10
+	;;
+	;; Check argc
+	;;
+	cmp	rcx, 3
+	jne	argcError
 
-_next:
-	cmp [rsi], byte 0
-	je _return
-	mov bl, [rsi]
-	;; num = ascii - 48
-	sub bl, 48
-	;; rbx = rcx * bl
-	mul rcx
-	;; rax = rax + rbx
-	add rax, rbx
-	;; rsi ++
-	inc rsi
-	jmp _next
+	;;
+	;; start to sum arguments
+	;;
 
-_return:
+	;; skip argv[0] - program name
+	add	rsp, 8
+
+	;; get argv[1]
+	pop	rsi
+	;; convert argv[1] str to int
+	call	str_to_int
+	;; put first num to r10
+	mov	r10, rax
+	;; get argv[2]
+	pop	rsi
+	;; convert argv[2] str to int
+	call	str_to_int
+	;; put second num to r10
+	mov	r11, rax
+	;; sum it
+	add	r10, r11
+
+	;;
+	;; Convert to string
+	;;
+	mov	rax, r10
+	;; number counter
+	xor	r12, r12
+	;; convert to string
+	jmp	int_to_str
+
+;;
+;; Print argc error
+;;
+argcError:
+	;; sys_write syscall
+	mov	rax, 1
+	;; file descritor, standard output
+	mov	rdi, 1
+	;; message address
+	mov	rsi, WRONG_ARGC
+	;; length of message
+	mov	rdx, 34
+	;; call write syscall
+	syscall
+	;; exit from program
+	jmp	exit
+
+
+;;
+;; Convert int to string
+;;
+int_to_str:
+	;; reminder from division
+	mov	rdx, 0
+	;; base
+	mov	rbx, 10
+	;; rax = rax / 10
+	div	rbx
+	;; add \0
+	add	rdx, 48
+	add	rdx, 0x0
+	;; push reminder to stack
+	push	rdx
+	;; go next
+	inc	r12
+	;; check factor with 0
+	cmp	rax, 0x0
+	;; loop again
+	jne	int_to_str
+	;; print result
+	jmp	print
+
+;;
+;; Convert string to int
+;;
+str_to_int:
+	;; accumulator
+	xor	rax, rax
+	;; base for multiplication
+	mov	rcx,  10
+next:
+	;; check that it is end of string
+	cmp	[rsi], byte 0
+	;; return int
+	je	return_str
+	;; mov current char to bl
+	mov	bl, [rsi]
+	;; get number
+	sub	bl, 48
+	;; rax = rax * 10
+	mul	rcx
+	;; ax = ax + digit
+	add	rax, rbx
+	;; get next number
+	inc	rsi
+	;; again
+	jmp	next
+
+return_str:
 	ret
 
-;; sum result is saved in rax
-_num_to_str:
-	xor r12, r12
-	mov rdx, 0
-	mov rbx, 10
-	div rbx
-	;; ascii = num + 48
-	add rdx, 48
-	add rdx, 0x0
-	;; push character to stack
-	push rdx
-	cmp rax, 0x0
-	jne _num_to_str
-	;; TODO: print the result
-	jmp print
 
-_wrong_argc:
-	mov rsi, WRONG_ARGC
-	mov rdx, LEN_WONG_ARGC
-	jmp _print
-
+;;
+;; Print number
+;;
 print:
-	;; calculate and set the content length to rdx
-	mov rax, 1
-	mul r12
-	mov r12, 8
-	mul r12
-	mov rdx, rax
-	mov rsi, rsp
-	jmp _print
+	;;;; calculate number length
+	mov	rax, 1
+	mul	r12
+	mov	r12, 8
+	mul	r12
+	mov	rdx, rax
+	;;;;
 
-
-;; print a str to console
-;; RSI will keep the msg
-;; RDX will keep the len(msg) - bytes
-_print:
-	mov rax, SYS_WRITE
-	mov rdi, STD_OUT
-	;; mov rsi, MSG_DATA
+	;;;; print sum
+	mov	rax, SYS_WRITE
+	mov	rdi, STD_IN
+	mov	rsi, rsp
+	;; call sys_write
 	syscall
+	;;
 
-_exit:
-	mov rax, SYS_EXIT
-	mov rdi, EXIT_CODE
+	;; newline
+	jmp	printNewline
+
+;;
+;; Print number
+;;
+printNewline:
+	mov	rax, SYS_WRITE
+	mov	rdi, STD_IN
+	mov	rsi, NEW_LINE
+	mov	rdx, 1
 	syscall
+	jmp	exit
 
+;;
+;; Exit from program
+;;
+exit:
+	;; syscall number
+	mov	rax, SYS_EXIT
+	;; exit code
+	mov	rdi, EXIT_CODE
+	;; call sys_exit
+	syscall
