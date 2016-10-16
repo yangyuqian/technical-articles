@@ -104,18 +104,14 @@ TEXT runtime·profileloop(SB),NOSPLIT,$8
   MOVQ    CX, 0(SP)
   CALL    runtime·externalthreadhandler(SB)
   RET
-```
 
-```
 // 定义参数通常需要指定size，如$24-8
 the frame size is followed by an argument size, separated by a minus sign.
 // 如果NOSPLIT没有指定，参数的size是必须指定的
 If NOSPLIT is not specified for the TEXT, the argument size must be provided.
-// Go汇编还可以声明调用.go声明的代码，但需要通过`·`来声明
-// package·function的调用，这里的`·`可以通过`Shift + Option + 9`输入.
-```
+// Go汇编还可以声明调用.go声明的代码，但需要通过·来声明
+// package·function的调用，这里的·可以通过Shift + Option + 9输入.
 
-```
 // Global指定后面跟着DATA指令可以定义全局标签，
 // 没有赋值的label全部被清零.
 Global data symbols are defined by a sequence of initializing DATA directives
@@ -132,8 +128,28 @@ given value. The DATA directives for a given symbol must be written with
 increasing offsets.
 ```
 
+例3: 一个简单的Go程序，通过`go tool compile -S` 获取`Plan9`反汇编结果：
+
+```
+$ GOOS=darwin GOARCH=amd64 go tool compile -S examples/e3/e3.go
+
+
+"".main t=1 size=64 value=0 args=0x0 locals=0x8
+	0x0000 00000 (examples/e3/e3.go:3)	TEXT	"".main(SB), $8-0
+	0x0000 00000 (examples/e3/e3.go:3)	MOVQ	(TLS), CX
+	0x0009 00009 (examples/e3/e3.go:3)	CMPQ	SP, 16(CX)
+	0x000d 00013 (examples/e3/e3.go:3)	JLS	52
+	0x000f 00015 (examples/e3/e3.go:3)	SUBQ	$8, SP
+
+...
+```
+
 # References
 
 [A Manual for the Plan 9 assembler](http://plan9.bell-labs.com/sys/doc/asm.html)
 
 [A Quick Guide to Go's Assembler](https://golang.org/doc/asm)
+
+[Things I learned writing a JIT in Go](http://nelhagedebugsshit.tumblr.com/post/84342207533/things-i-learned-writing-a-jit-in-go)
+
+[Assembly](https://goroutines.com/asm)
