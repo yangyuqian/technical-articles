@@ -244,6 +244,48 @@ argv[N - 1]
 * 获取参数阶段，前面已经介绍过
 * 打印输出的时候，把输出内容压栈，并把栈顶`rsp`传给`syscall`
 
+把输入的2个参数转成数字：
+
+```
+	pop	rsi
+	call	str_to_int
+	mov	r10, rax
+
+	pop	rsi
+	call	str_to_int
+	mov	r11, rax
+```
+
+这里写了一个子函数`str_to_int`
+
+```
+;; 输入[rsi]，输出rax
+str_to_int:
+	;; rax = 0
+	xor	rax, rax
+	mov	rcx,  10
+next:
+  ;; 判断最后一个字符
+	cmp	[rsi], byte 0
+	;; return int
+	je	return_str
+	;; NASM中给8 bit寄存器的别名
+	mov	bl, [rsi]
+	;; 单个ascii字符转成数字, 这里BL(8 bits)是RAX(64 bits)的一部分
+	sub	bl, 48
+	;; rax = rax * 10
+	mul	rcx
+	;; ax = ax + digit
+	add	rax, rbx
+	;; get next number
+	inc	rsi
+	;; again
+	jmp	next
+
+return_str:
+	ret
+```
+
 
 # References
 
@@ -256,3 +298,5 @@ argv[N - 1]
 [NASM Assembly](http://www.nasm.us/doc/nasmdoc3.html)
 
 [Making system calls from Assembly in Mac OS X](https://filippo.io/making-system-calls-from-assembly-in-mac-os-x/)
+
+[The Netwide Assembler: NASM](http://www.nasm.us/doc/nasmdo11.html)
