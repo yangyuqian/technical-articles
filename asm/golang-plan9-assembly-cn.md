@@ -153,3 +153,5 @@ $ GOOS=darwin GOARCH=amd64 go tool compile -S examples/e3/e3.go
 [Things I learned writing a JIT in Go](http://nelhagedebugsshit.tumblr.com/post/84342207533/things-i-learned-writing-a-jit-in-go)
 
 [Assembly](https://goroutines.com/asm)
+
+[SIMD](https://en.wikipedia.org/wiki/SIMD)
