@@ -271,19 +271,38 @@ next:
 	je	return_str
 	;; NASM中给8 bit寄存器的别名
 	mov	bl, [rsi]
-	;; 单个ascii字符转成数字, 这里BL(8 bits)是RAX(64 bits)的一部分
+	;; 单个ascii字符转成数字, 这里BL(8 bits)是RBX(64 bits)最低的8 bit
 	sub	bl, 48
-	;; rax = rax * 10
+	;; rax = rax * rcx(10)
 	mul	rcx
 	;; ax = ax + digit
 	add	rax, rbx
-	;; get next number
+	;; 地址+1，获取下一个字符
 	inc	rsi
 	;; again
 	jmp	next
 
 return_str:
 	ret
+```
+
+NASM中64 bits寄存器：
+
+```
+R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  R11  R12  R13  R14  R15
+RAX RCX RDX RBX RSP RBP RSI RDI
+```
+
+注意在`Intel i7`中前面8个寄存器是`RAX ~ RDI`，但`NASM`里面给了别名`R0~R7`.
+
+这里用到了8 bits的寄存器：
+
+```
+// 64 bits寄存器中最低的8 bits
+// 下面一行寄存器名字是实际的名字，上面的是NASM中的别名
+
+R0B R1B R2B R3B R4B R5B R6B R7B R8B R9B R10B R11B R12B R13B R14B R15B
+AL  CL  DL  BL  SPL BPL SIL DIL
 ```
 
 
