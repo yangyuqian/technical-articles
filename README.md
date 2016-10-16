@@ -10,6 +10,7 @@ Go
 * [Vendoring(Chinese)](go/vendoring-cn.md)
 * [Implementation of Channel(Chinese)](go/channel-implementation-cn.md)
 * [Usage of Channel(Chinese)](go/channel-usage-cn.md)
+* [Memory and GC(Chinese)](go/memory-cn.md)
 
 Ruby
 * [Rails Class Loader(Chinese)](https://github.com/yangyuqian/ruby-articles/blob/master/RAILS-CLASS-LOADER.md)
