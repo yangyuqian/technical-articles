@@ -80,6 +80,57 @@ For example, on the ARM architecture the hardware
 SP and PC are accessible as R13 and R15.
 ```
 
+程序跳转和流控制是通过跳转PC的偏移量或者`label`实现的，
+`label`只对当前的function可见：
+
+```
+next:
+  MOVW $0, R1
+  JMP  next
+```
+
+虚拟指令(Directives)
+
+```
+// 用虚拟指令来封装了text/data section
+The assembler uses various directives to bind text and data to symbol names.
+```
+
+下面是一个真实的`Go Plan9`汇编中的function定义：
+
+```
+TEXT runtime·profileloop(SB),NOSPLIT,$8
+  MOVQ    $runtime·profileloop1(SB), CX
+  MOVQ    CX, 0(SP)
+  CALL    runtime·externalthreadhandler(SB)
+  RET
+```
+
+```
+// 定义参数通常需要指定size，如$24-8
+the frame size is followed by an argument size, separated by a minus sign.
+// 如果NOSPLIT没有指定，参数的size是必须指定的
+If NOSPLIT is not specified for the TEXT, the argument size must be provided.
+// Go汇编还可以声明调用.go声明的代码，但需要通过`·`来声明
+// package·function的调用，这里的`·`可以通过`Shift + Option + 9`输入.
+```
+
+```
+// Global指定后面跟着DATA指令可以定义全局标签，
+// 没有赋值的label全部被清零.
+Global data symbols are defined by a sequence of initializing DATA directives
+followed by a GLOBL directive. Each DATA directive initializes a section of the
+corresponding memory. The memory not explicitly initialized is zeroed.
+The general form of the DATA directive is:
+
+DATA    symbol+offset(SB)/width, value
+
+// 上面的语句初始化symbol+offset(SB)的数据中width bytes，赋值为value
+which initializes the symbol memory at the given offset and width with the
+// 相对于栈操作，SB的操作都是增地址，栈是减地址
+given value. The DATA directives for a given symbol must be written with
+increasing offsets.
+```
 
 # References
 
