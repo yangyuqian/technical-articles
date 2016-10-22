@@ -38,25 +38,87 @@ func main() {
 首先看一下模板定义的实现：
 
 ```
-// src/text/template/template.go#L53
-func (t *Template) New(name string) *Template {
+// src/text/template/template.go#L37
+func New(name string) *Template {
+	t := &Template{
+		name: name,
+	}
+  
   // 初始化package全局可见的template.common(私有变量)，
   // 包含一些自定义的扩展，比如全局的模板库，解析函数，渲染函数
 	t.init()
-  // 创建并返回一个Template对象
-	nt := &Template{
-    // name是模板唯一标识
-		name:       name,
-    // t.init()的时候初始化的就是t.common
-		common:     t.common,
-    // 定义模板中的标志符，默认是{{ ... }}
-		leftDelim:  t.leftDelim,
-		rightDelim: t.rightDelim,
-	}
-	return nt
+	return t
 }
 ```
 
+接着看模板解析实现：
 
+```
+// src/text/template/template.go#L187
+func (t *Template) Parse(text string) (*Template, error) {
+  // 和 template.
+	t.init()
+  // 加读锁，当共享数据被修改(写)时阻塞
+	t.muFuncs.RLock()
+  // 解析模板内容，返回map[string]*Tree => trees
+	trees, err := parse.Parse(t.name, text, t.leftDelim, t.rightDelim, t.parseFuncs, builtins)
+  // 释放读锁
+	t.muFuncs.RUnlock()
+	if err != nil {
+		return nil, err
+	}
+  // 修改现有模板对象中模板树
+	for name, tree := range trees {
+		if _, err := t.AddParseTree(name, tree); err != nil {
+			return nil, err
+		}
+	}
+	return t, nil
+}
+```
 
+调用`Template.Parse`时会创建一个`goroutine`来并发解析模板文本，传给`Tree.parse`.
+最终模板被解析成数组存放的`Node`对象，例1中的`Node`内容为:
 
+```
+["Hello ", "{{.Name}}", ", text/template!"]
+```
+
+`Node`实现了`Type()`，返回其实际类型，例1中 `Hello `的类型为`text`，
+而`{{.Name}}`为`NodeAction`，
+即`non-control action such as a field evaluation.`，类型都是`iota`常量.
+
+模板解析的`Node`还有其他类型，主要影响渲染过程，后面会一一结合实例介绍.
+
+最后看模板的渲染:
+
+```
+// src/text/template/exec.go#L174
+func (t *Template) Execute(wr io.Writer, data interface{}) error {
+	return t.execute(wr, data)
+}
+
+// 这里要求判断传入的data是对象的指针
+func (t *Template) execute(wr io.Writer, data interface{}) (err error) {
+	defer errRecover(&err)
+	value := reflect.ValueOf(data)
+  // 初始化模板渲染状态机
+	state := &state{
+		tmpl: t,
+		wr:   wr,
+		vars: []variable{{"$", value}},
+	}
+	if t.Tree == nil || t.Root == nil {
+		state.errorf("%q is an incomplete or empty template%s", t.Name(), t.DefinedTemplates())
+	}
+  // 遍历整个模板解析数
+	state.walk(value, t.Root)
+	return
+}
+```
+
+然后通过反射取得具体得字段内容，填充`{{ .Name }}`
+
+```
+
+```
