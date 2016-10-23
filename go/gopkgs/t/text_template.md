@@ -78,10 +78,21 @@ func (t *Template) Parse(text string) (*Template, error) {
 ```
 
 调用`Template.Parse`时会创建一个`goroutine`来并发解析模板文本，传给`Tree.parse`.
-最终模板被解析成数组存放的`Node`对象，例1中的`Node`内容为:
+最终模板被解析成多叉树存放的，例1中的`Node`内容为:
 
 ```
-["Hello ", "{{.Name}}", ", text/template!"]
+                          +----------+
+     +--------------------+   Root   +----------------------------+
+     |                    |(ListNode)|                            |
+     |                    +-----+----+                            |
+     |                          |                                 |
+     |                          |                                 |
+     |                          |                                 |
+     |                          |                                 |
++----v-----+             +------v------+              +-----------v--------+
+| "Hello " |             |"{{ .Name }}"|              | ", text/template!" |
+|(TextNode)|             | (ActionNode)|              |    (TextNode)      |
++----------+             +-------------+              +--------------------+
 ```
 
 `Node`实现了`Type()`，返回其实际类型，例1中 `Hello `的类型为`text`，
@@ -117,8 +128,139 @@ func (t *Template) execute(wr io.Writer, data interface{}) (err error) {
 }
 ```
 
-然后通过反射取得具体得字段内容，填充`{{ .Name }}`
+渲染算法对解析出来的多叉树结构的递归遍历：
 
 ```
+                          +----------+
+     +--------------------+   Root   +----------------------------+
+     |                    |(ListNode)|                            |
+     |                    +-----+----+                            |
+     |                          |                                 |
+     |                          |                                 |
+     |                          |                                 |
+     |                          |                                 |
++----v-----+             +------v------+              +-----------v--------+
+| "Hello " |             |"{{ .Name }}"|              | ", text/template!" |
+|(TextNode)|             | (ActionNode)|              |    (TextNode)      |
++----+-----+             +------+------+              +-----------+--------+
+     |                          |                                 |
+     |                          |                                 |
+     |                          |                                 |
+     |                          |                                 |
++----v--------------------------v---------------------------------v--------+
+| "Hello "                 "Gopher"                    ", text/template!"  |
++--------------------------------------------------------------------------+
+```
+
+例1中的2种类型的节点的渲染算法实现：
 
 ```
+// src/text/template/exec.go#L220
+func (s *state) walk(dot reflect.Value, node parse.Node) {
+	s.at(node)
+	switch node := node.(type) {
+  // 非控制节点(if/else/range)，比如 {{ .Name }}
+	case *parse.ActionNode:
+		val := s.evalPipeline(dot, node.Pipe)
+		if len(node.Pipe.Decl) == 0 {
+			s.printValue(node, val)
+		}
+	case *parse.IfNode:
+		s.walkIfOrWith(parse.NodeIf, dot, node.Pipe, node.List, node.ElseList)
+  // 模板树非叶子节点，遍历子节点
+	case *parse.ListNode:
+		for _, node := range node.Nodes {
+			s.walk(dot, node)
+		}
+	case *parse.RangeNode:
+		s.walkRange(dot, node)
+	case *parse.TemplateNode:
+		s.walkTemplate(dot, node)
+  // 文本节点，比如例1中的"Hello "，直接输出到输出流
+	case *parse.TextNode:
+		if _, err := s.wr.Write(node.Text); err != nil {
+			s.writeError(err)
+		}
+	case *parse.WithNode:
+		s.walkIfOrWith(parse.NodeWith, dot, node.Pipe, node.List, node.ElseList)
+	default:
+		s.errorf("unknown node: %s", node)
+	}
+}
+```
+
+文本节点渲染比较直接：
+
+```
+	case *parse.TextNode:
+		if _, err := s.wr.Write(node.Text); err != nil {
+			s.writeError(err)
+		}
+```
+
+ActionNode的渲染，这里只介绍`{{ .Name }}`(pipeline)的渲染：
+
+```
+// src/text/template/exec.go#L536
+func (s *state) evalField(dot reflect.Value, fieldName string, node parse.Node, args []parse.Node, final, receiver reflect.Value) reflect.Value {
+	if !receiver.IsValid() {
+		return zero
+	}
+	typ := receiver.Type()
+	receiver, isNil := indirect(receiver)
+	ptr := receiver
+	if ptr.Kind() != reflect.Interface && ptr.CanAddr() {
+		ptr = ptr.Addr()
+	}
+  // 先尝试调用`Name(...)` method
+	if method := ptr.MethodByName(fieldName); method.IsValid() {
+		return s.evalCall(dot, method, node, fieldName, args, final)
+	}
+  // 走到这里说明不是method，但发现有参数，如{{ .Name a b }}
+	hasArgs := len(args) > 1 || final.IsValid()
+	switch receiver.Kind() {
+  // 判断输入的数据是不是struct，是的话就调用data.Name
+	case reflect.Struct:
+		tField, ok := receiver.Type().FieldByName(fieldName)
+		if ok {
+			if isNil {
+				s.errorf("nil pointer evaluating %s.%s", typ, fieldName)
+			}
+			field := receiver.FieldByIndex(tField.Index)
+			if tField.PkgPath != "" { // field is unexported
+				s.errorf("%s is an unexported field of struct type %s", fieldName, typ)
+			}
+			if hasArgs {
+				s.errorf("%s has arguments but cannot be invoked as function", fieldName)
+			}
+			return field
+		}
+  // 如果是map, 就调用data[Name]
+	case reflect.Map:
+		if isNil {
+			s.errorf("nil pointer evaluating %s.%s", typ, fieldName)
+		}
+		nameVal := reflect.ValueOf(fieldName)
+		if nameVal.Type().AssignableTo(receiver.Type().Key()) {
+			if hasArgs {
+				s.errorf("%s is not a method but has arguments", fieldName)
+			}
+			result := receiver.MapIndex(nameVal)
+			if !result.IsValid() {
+				switch s.tmpl.option.missingKey {
+				case mapInvalid:
+				case mapZeroValue:
+					result = reflect.Zero(receiver.Type().Elem())
+				case mapError:
+					s.errorf("map has no entry for key %q", fieldName)
+				}
+			}
+			return result
+		}
+	}
+	s.errorf("can't evaluate field %s in type %s", fieldName, typ)
+	panic("not reached")
+}
+```
+
+例2 `examples/e2.go`是更复杂的例子，包含更复杂的树节点类型
