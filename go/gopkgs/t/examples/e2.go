@@ -7,8 +7,8 @@ import (
 )
 
 func main() {
-	tmpl := `Hello {{ $b := 1 }} {{if eq .Index $b}} {{.Name1}} {{.Name2}} <% .Name2 %> {{else}} {{ .Name1 }} {{end}}, text/template!`
-	t := template.Must(template.New("e1").Delims("<%", "%>").Parse(tmpl))
+	tmpl := `Hello {{ $b := 1 }} {{if eq .Index $b}} {{.Name1}} {{else}} {{ .Name2 }} {{end}}, text/template!`
+	t := template.Must(template.New("e1").Parse(tmpl))
 
 	if err := t.Execute(os.Stdout, &struct {
 		Name1 string
