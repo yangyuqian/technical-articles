@@ -266,5 +266,15 @@ func (s *state) evalField(dot reflect.Value, fieldName string, node parse.Node, 
 例2 `examples/e2.go`是更复杂的例子，包含更复杂的树节点类型
 
 ```
-
+	tmpl := `Hello {{ $b := 1 }} {{if eq .Index $b}} {{.Name1}} {{else}} {{ .Name2 }} {{end}}, text/template!`
 ```
+
+例2中模板解析为5个`Node`:
+
+|节点内容|节点类型|解释|
+|--------|--------|----|
+|"Hello "|Text||
+|"{{$b := 1}}"|Action||
+|" "|Text||
+|{{if eq .Index $b}} {{.Name1}} {{else}} {{.Name2}} {{end}}|If||
+|", text/template!"|Text||
