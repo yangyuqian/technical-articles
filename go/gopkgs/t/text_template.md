@@ -278,3 +278,39 @@ func (s *state) evalField(dot reflect.Value, fieldName string, node parse.Node, 
 |" "|Text||
 |{{if eq .Index $b}} {{.Name1}} {{else}} {{.Name2}} {{end}}|If||
 |", text/template!"|Text||
+
+
+其中`If Node`还会被递归解析：
+
+```
+                       +------------+
+                       |   IfNode   |
+      +----------------+(BranchNode)+------------------+
+      |                +------+-----+                  |
+      |                       |                        |
+      |                       |                        |
++-----v-----+          +------v-----+           +------v-----+
+|  PipeNode |          |  List(If)  |           |  ElseList  |
+|           |          | (ListNode) |           | (ListNode) |
++-----------+          +------+-----+           +------+-----+
+                              |                        |
+                              |                        |
+                              |                        |
++-----------------------------v------------------------v-----+
+|              " "   "{{.Name1}}"  " "  " "  "{{.Name2}}" " "|
+|              Text    Action      Text Text  Action     Text|
++------------------------------------------------------------+
+```
+
+在`Execute`一个模板的时候，就是对以上解析结果的叶子节点进行渲染，
+叶子节点最终会是`TextNode`或`ActionNode`.
+
+此外还有一些复杂类型：
+
+* Block
+* Range
+* Template
+* With
+
+控制(Control，如If/Else)节点最终都会被解析为树结构，渲染的时候完成解析，
+本文不再一一介绍.
