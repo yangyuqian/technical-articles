@@ -282,5 +282,5 @@ func (sh serverHandler) ServeHTTP(rw ResponseWriter, req *Request) {
 }
 ```
 
-可见所有的`Route`实现无非就是实现了一个自定义的`Handler`对象，
+可见所有开源`Route`实现无非就是实现了一个自定义的`Handler`对象，
 覆盖了默认的`DefaultServeMux`.
