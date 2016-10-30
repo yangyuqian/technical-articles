@@ -278,11 +278,7 @@ func (sh serverHandler) ServeHTTP(rw ResponseWriter, req *Request) {
 	if handler == nil {
 		handler = DefaultServeMux
 	}
-	if req.RequestURI == "*" && req.Method == "OPTIONS" {
-		handler = globalOptionsHandler{}
-	}
-  // 调用handler的ServeHTTP接口
-	handler.ServeHTTP(rw, req)
+  // ...
 }
 ```
 
