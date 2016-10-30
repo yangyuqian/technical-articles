@@ -217,5 +217,59 @@ func (sh serverHandler) ServeHTTP(rw ResponseWriter, req *Request) {
 由此可见`net/http`的基本处理流程如下：
 
 ```
+                                        +
+                                        |
+                            TCP         |        HTTP/1.1
+                                        |
+                                        |
+                     +---------------+  |
+          +---------->    socket     |  |
+          |          +---------------+  |
+          |                             |
+wait new connections                    |
+          |          +---------------+  | Read
+          |          | TCP Connection+----------------------------------------------+
+          +----------+  (Goroutine)  <-----------------+                            |
+                     +---------------+  | Write        |                            |
+                                        |              |                            |
+                                        |              |                            |
+                                        |    +---------+--------+          +--------v--------+
+                                        |    |    *response     |          |    *Request     |
+                                        |    | (ResponseWriter) |          |                 |
+                                        |    +---------^--------+          +--------+--------+
+                                        |              |                            |
+                                        |              |                            |
+                                        |              |                            |
+                                        |              |                            |
+                                        |    +---------+----------------------------v--------+
+                                        |    |                 Handler                       |
+                                        |    |      .ServeHTTP(ResponseWriter, *Request)     |
+                                        |    |                                               |
+                                        |    |         (Handler || Default Mux)              |
+                                        |    +-----------------------------------------------+
+                                        |
+                                        |
+                                        +
 
 ```
+
+上图介绍了`net/http`中TCP处理流程和HTTP处理流程之间的联系，
+在Go中为每个TCP连接创建独立的Goroutine，对`HTTP/1.1`而言，
+TCP连接是共享的，所以`HTTP/1.1`中每个请求都会由独立的Goroutine来处理.
+
+TCP连接建立起来之后，交由HTTP层的`handler`处理7层的业务逻辑，TCP把对客户端的写
+接口和请求读取接口以`ResponseWriter`和`*Request`形式暴露出来，下方的Handler实现
+了`http.Handler`接口:
+
+```
+// src/net/http/server.go#L77
+type Handler interface {
+	ServeHTTP(ResponseWriter, *Request)
+}
+```
+
+启动服务的时候可以传入一个Handler对象，
+否则就会采用`net/http`默认的`DefaultServeMux`，定义了默认的`routes`管理机制.
+
+可见所有的`Route`实现无非就是实现了一个自定义的`Handler`对象，
+覆盖了默认的`DefaultServeMux`.
