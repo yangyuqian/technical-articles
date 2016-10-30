@@ -271,5 +271,20 @@ type Handler interface {
 启动服务的时候可以传入一个Handler对象，
 否则就会采用`net/http`默认的`DefaultServeMux`，定义了默认的`routes`管理机制.
 
+```
+// src/net/http/server.go#L1485
+func (sh serverHandler) ServeHTTP(rw ResponseWriter, req *Request) {
+	handler := sh.srv.Handler
+	if handler == nil {
+		handler = DefaultServeMux
+	}
+	if req.RequestURI == "*" && req.Method == "OPTIONS" {
+		handler = globalOptionsHandler{}
+	}
+  // 调用handler的ServeHTTP接口
+	handler.ServeHTTP(rw, req)
+}
+```
+
 可见所有的`Route`实现无非就是实现了一个自定义的`Handler`对象，
 覆盖了默认的`DefaultServeMux`.
