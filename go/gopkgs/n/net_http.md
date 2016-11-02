@@ -284,3 +284,190 @@ func (sh serverHandler) ServeHTTP(rw ResponseWriter, req *Request) {
 
 可见所有开源`Route`实现无非就是实现了一个自定义的`Handler`对象，
 覆盖了默认的`DefaultServeMux`.
+
+
+下面来看`ServerMux`的实现：
+
+```
+// src/net/http/server.go#L1900
+type ServeMux struct {
+	mu    sync.RWMutex
+	m     map[string]muxEntry
+	hosts bool // whether any patterns contain hostnames
+}
+
+// src/net/http/server.go#L1900
+func (mux *ServeMux) ServeHTTP(w ResponseWriter, r *Request) {
+  // HTTP/1.1+中不允许url为*
+	if r.RequestURI == "*" {
+		if r.ProtoAtLeast(1, 1) {
+			w.Header().Set("Connection", "close")
+		}
+		w.WriteHeader(StatusBadRequest)
+		return
+	}
+  // 从已经注册的Handler中选择一个，默认返回NotFoundHandler
+	h, _ := mux.Handler(r)
+	h.ServeHTTP(w, r)
+}
+
+// src/net/http/server.go#L1979
+func (mux *ServeMux) Handler(r *Request) (h Handler, pattern string) {
+  // 只支持HTTP/1.1
+	if r.Method != "CONNECT" {
+    // 处理redirect的特殊情况, CleanPath返回带slash的Path
+    // 比如/x1/x2 将被跳转到 /x1/x2/
+		if p := cleanPath(r.URL.Path); p != r.URL.Path {
+			_, pattern = mux.handler(r.Host, p)
+			url := *r.URL
+			url.Path = p
+			return RedirectHandler(url.String(), StatusMovedPermanently), pattern
+		}
+	}
+
+	return mux.handler(r.Host, r.URL.Path)
+}
+
+// src/net/http/server.go#L1994
+// 参数:
+//  - host: Request.Host
+//  - path: Request.URL.Path
+func (mux *ServeMux) handler(host, path string) (h Handler, pattern string) {
+  // 对ServerMux加读锁
+	mux.mu.RLock()
+	defer mux.mu.RUnlock()
+  // mux.hosts => bool, 在mux.Handle中如果发现pattern不是 slash开头
+  // mux.hosts = true
+  // 在修改DefaultServeMux状态的时候，即调用HandleFunc, Handle的时候
+  // 如果发现给出的pattern前面不带slash，就会认为是带host的定义
+	if mux.hosts {
+		h, pattern = mux.match(host + path)
+	}
+	if h == nil {
+		h, pattern = mux.match(path)
+	}
+	if h == nil {
+		h, pattern = NotFoundHandler(), ""
+	}
+	return
+}
+
+// src/net/http/server.go#L1952
+func (mux *ServeMux) match(path string) (h Handler, pattern string) {
+	var n = 0
+	for k, v := range mux.m {
+    // 匹配Handler
+		if !pathMatch(k, path) {
+			continue
+		}
+		if h == nil || len(k) > n {
+			n = len(k)
+			h = v.h
+			pattern = v.pattern
+		}
+	}
+	return
+}
+
+// src/net/http/server.go#L1921
+func pathMatch(pattern, path string) bool {
+	if len(pattern) == 0 {
+		return false
+	}
+	n := len(pattern)
+  // 如果pattern不是完全路径 /a/b, 必须完全匹配
+	if pattern[n-1] != '/' {
+		return pattern == path
+	}
+  // 如果是完全路径 /a/b/，会把path截取和pattern相同长度然后直接匹配
+	return len(path) >= n && path[0:n] == pattern
+}
+```
+
+ServeMux（默认route实现）是“首次匹配”，以下是几个匹配的典型例子:
+
+```
+// ServeMux的定义是以Map存放的，
+// 当有多个handler满足条件的时候，匹配的顺序可能会变
+HandleFunc("/x1", ...) => "/x1"
+HandleFunc("/x1/", ...) => "/x1"(redirect 302), "/x1/", "/x1/x2/"
+HandleFunc("/x1/x2") => "/x1/x2"
+HandleFunc("/x1/x2/", ...) => "/x1/x2", "/x1/x2/x3"
+HandleFunc("/") -> "/", "/x1"
+```
+
+接下来看ServeMux的几种定义方式的具体实现：
+
+```
+// src/net/http/server.go#L2089
+func HandleFunc(pattern string, handler func(ResponseWriter, *Request)) {
+	DefaultServeMux.HandleFunc(pattern, handler)
+}
+// src/net/http/server.go#L2069
+func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Request)) {
+	mux.Handle(pattern, HandlerFunc(handler))
+}
+// src/net/http/server.go#L2027
+func (mux *ServeMux) Handle(pattern string, handler Handler) {
+  // 加写锁，写操作完成之前，所有mux上的读锁都会阻塞
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
+  // pattern不能为空字符串
+	if pattern == "" {
+		panic("http: invalid pattern " + pattern)
+	}
+  // handler不能为nil
+	if handler == nil {
+		panic("http: nil handler")
+	}
+  // pattern不允许重复注册
+	if mux.m[pattern].explicit {
+		panic("http: multiple registrations for " + pattern)
+	}
+
+  // 初始化并注册handler
+	if mux.m == nil {
+		mux.m = make(map[string]muxEntry)
+	}
+	mux.m[pattern] = muxEntry{explicit: true, h: handler, pattern: pattern}
+
+	if pattern[0] != '/' {
+		mux.hosts = true
+	}
+
+	n := len(pattern)
+	if n > 0 && pattern[n-1] == '/' && !mux.m[pattern[0:n-1]].explicit {
+    // 如果pattern带hostname, strip并进行跳转
+		path := pattern
+		if pattern[0] != '/' {
+      // 所谓的strip，实际上就是直接找到第一个slash
+			path = pattern[strings.Index(pattern, "/"):]
+		}
+
+    // 执行跳转
+		url := &url.URL{Path: path}
+		mux.m[pattern[0:n-1]] = muxEntry{h: RedirectHandler(url.String(), StatusMovedPermanently), pattern: pattern}
+	}
+}
+```
+
+还有一种`http.HandlerFunc`
+
+```
+type HandlerFunc func(ResponseWriter, *Request)
+
+// 在一个function上面定一个method，一种有趣的调用方式
+func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request) {
+	f(w, r)
+}
+```
+
+`HandlerFunc`可以当作独立的Handler来传给`ListenAndServe`.
+
+至此，`net/http`的常规操作都介绍完了，接下来分析以下`net/http`中的几个struct及
+他们的字段含义:
+
+先看`Request`:
+
+
