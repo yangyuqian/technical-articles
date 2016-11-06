@@ -534,6 +534,7 @@ GET / HTTP/1.1
 Host: www.example.com
 ```
 
-如果执行`curl www.example.com`，发出的请求实际上是后者. 涉及请求转发的时候
-HTTP实际的请求包可能会有不同的行为.
+如果执行`curl www.example.com`或者浏览器访问`http://www.example.com`，
+发出的请求实际上是后者. 如果用程序客户端发HTTP请求，得到的请求包可能是前者.
+涉及请求转发的时候HTTP实际的请求包可能会有不同的行为.
 
