@@ -3,14 +3,22 @@ package main
 import (
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"fmt"
 )
 
 func main() {
 	db, _ := sql.Open("test", "somesource")
-	stmt, _ := db.Prepare("")
-	rows, _ := stmt.Query(1)
-	fmt.Println("-------- rows:", rows)
+	stmt, _ := db.Prepare("SELECT")
+	if rows, err := stmt.Query(); err != nil {
+		fmt.Println("-------- rows:", rows, "err:", err)
+	} else {
+		for rows.Next() {
+			var id int64
+			rows.Scan(&id)
+			fmt.Println("scanned id:", id)
+		}
+	}
 }
 
 func init() {
@@ -85,9 +93,12 @@ func (res *testResult) RowsAffected() (cnt int64, err error) {
 }
 
 // ********************* Rows ***********************
-type testRows struct{}
+type testRows struct {
+	count int
+}
 
-func (rows *testRows) Columns() (colums []string) {
+func (rows *testRows) Columns() (columns []string) {
+	columns = []string{"id"}
 	return
 }
 
@@ -96,5 +107,12 @@ func (rows *testRows) Close() (err error) {
 }
 
 func (rows *testRows) Next(dest []driver.Value) (err error) {
+	if rows.count >= 10 {
+		err = errors.New("run out of index")
+	}
+	rows.count++
+
+	dest[0] = rows.count
+
 	return
 }
