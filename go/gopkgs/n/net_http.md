@@ -465,9 +465,75 @@ func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request) {
 
 `HandlerFunc`可以当作独立的Handler来传给`ListenAndServe`.
 
-至此，`net/http`的常规操作都介绍完了，接下来分析以下`net/http`中的几个struct及
-他们的字段含义:
+至此，`net/http`的常规操作都介绍完了，接下来分析以下`net/http`中的几个重要类型.
 
-先看`Request`:
+先看`Request`：
 
+```
+// src/net/http/request.go#L79
+type Request struct {
+  // 取自协议包第一行. Method URI Proto
+	Method string
+	RequestURI string
+	Proto      string
+	ProtoMajor int    // 从Proto获取
+	ProtoMinor int    // 从Proto获取
+
+  // 从RequestURI解析得到，具体在后面介绍
+	URL *url.URL
+
+  // 从HTTP包第二行就是Header, 和第一行在同一个TCP包中
+	Header Header
+
+  // 1. GET /index.html HTTP/1.1
+  //    Host: www.example.com
+  // 2. GET http://www.example.com/index.html HTTP/1.1
+  //    Host: doesntmatter，这样的话，所有的Host头都会被忽略
+	Host string
+
+	Body io.ReadCloser
+	ContentLength int64
+	TransferEncoding []string
+	Close bool
+	Form url.Values
+	PostForm url.Values
+	MultipartForm *multipart.Form
+	Trailer Header
+	RemoteAddr string
+	TLS *tls.ConnectionState
+	Cancel <-chan struct{}
+	Response *Response
+	ctx context.Context
+}
+
+// src/net/url/url.go#L313
+type URL struct {
+	Scheme     string
+	Opaque     string
+	User       *Userinfo
+	Host       string
+	Path       string
+	RawPath    string
+	ForceQuery bool
+	RawQuery   string
+	Fragment   string
+}
+```
+
+对`Host`的处理比较有意思，如果`URL`里面带了`Host`, `Header`中的`Host`会被忽略：
+
+```
+GET http://www.example.com/ HTTP/1.1
+Host: host(ignored)
+```
+
+如果`URL`里面没有Host信息，才会用`Header`中的`Host`，存在安全隐患：
+
+```
+GET / HTTP/1.1
+Host: www.example.com
+```
+
+如果执行`curl www.example.com`，发出的请求实际上是后者. 涉及请求转发的时候
+HTTP实际的请求包可能会有不同的行为.
 
