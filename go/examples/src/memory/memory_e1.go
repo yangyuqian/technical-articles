@@ -16,16 +16,19 @@ func mem(n int) {
 		}
 		ps = p
 	}
-	mem, _ := ps.MemoryInfoEx()
-	fmt.Printf("%d. VMS: %d MB, RSS: %d MB\n", n, mem.VMS>>20, mem.RSS>>20)
+	mem, _ := ps.MemoryInfo()
+	fmt.Printf("%d. VMS: %dGB, RSS: %dMB, Swap: %dMB\n", n, mem.VMS>>30, mem.RSS>>20, mem.Swap>>20)
 }
 
 func main() {
-	// 1.  mem(1)
-	// 2.  10 * 1MB  data := new([10][1024 * 1024]byte) mem(2)
-	// 3.  for i := range data {
-	for x, n := 0, len(data[i]); x < n; x++ {
-		data[i][x] = 1
+	mem(1)
+	// 10M memory
+	data := new([10][1024 * 1024]byte)
+	for i := range data {
+		for x, n := 0, len(data[i]); x < n; x++ {
+			data[i][x] = 1
+		}
+		mem(2)
 	}
 	mem(3)
 }
