@@ -338,3 +338,331 @@ func (h *mheap) alloc(npage uintptr, sizeclass int32, large bool, needzero bool)
 }
 ```
 
+**内存回收实现**
+
+初始化:
+
+```
+func gcenable() {
+	c := make(chan int, 1)
+	// bgsweep里面是一个无限循环，这里会直接往下走
+	go bgsweep(c)
+	<-c
+	memstats.enablegc = true // now that runtime is initialized, GC is okay
+}
+```
+
+再看bgsweep的实现:
+
+```
+func bgsweep(c chan int) {
+	sweep.g = getg()
+
+	lock(&sweep.lock)
+	sweep.parked = true
+	c <- 1
+	goparkunlock(&sweep.lock, "GC sweep wait", traceEvGoBlock, 1)
+
+	for {
+		// 始终再后台变脸所有的g对象
+		for gosweepone() != ^uintptr(0) {
+			sweep.nbgsweep++
+			Gosched()
+		}
+		lock(&sweep.lock)
+		if !gosweepdone() {
+			// 上一次sweep没完成的话，忽略当前的sweep操作
+			unlock(&sweep.lock)
+			continue
+		}
+		sweep.parked = true
+		goparkunlock(&sweep.lock, "GC sweep wait", traceEvGoBlock, 1)
+	}
+}
+```
+
+gosweepone的实现：
+
+```
+func gosweepone() uintptr {
+	var ret uintptr
+	systemstack(func() {
+    // ret => 回收的内存页数
+		ret = sweepone()
+	})
+	return ret
+}
+```
+
+sweepone的实现：
+
+```
+func sweepone() uintptr {
+	_g_ := getg()
+
+	// increment locks to ensure that the goroutine is not preempted
+	// in the middle of sweep thus leaving the span in an inconsistent state for next GC
+	_g_.m.locks++
+	sg := mheap_.sweepgen
+	// 遍历span链表
+	for {
+		idx := atomic.Xadd(&sweep.spanidx, 1) - 1
+		// span为空链表，返回0
+		if idx >= uint32(len(work.spans)) {
+			mheap_.sweepdone = 1
+			_g_.m.locks--
+			if debug.gcpacertrace > 0 && idx == uint32(len(work.spans)) {
+				print("pacer: sweep done at heap size ", memstats.heap_live>>20, "MB; allocated ", mheap_.spanBytesAlloc>>20, "MB of spans; swept ", mheap_.pagesSwept, " pages\n")
+			}
+			return ^uintptr(0)
+		}
+		s := work.spans[idx]
+		// 忽略闲置的span
+		if s.state != mSpanInUse {
+			// 闲置的span.sweepgen设置为全局sweepgen
+			s.sweepgen = sg
+			continue
+		}
+		// atomic.Cas(&s.sweepgen, sg-2, sg-1) => 汇编实现
+		// 结果：s.sweepgen == sg-1 ? sg-1 : sg-2
+		if s.sweepgen != sg-2 || !atomic.Cas(&s.sweepgen, sg-2, sg-1) {
+			continue
+		}
+		// span.npages => span中的页面数
+		// 可见span要么全部被归还heap，要么就全部保留给当前的goroutine
+		npages := s.npages
+		// span.sweep => 只有2种结果，要么span被全部回收，要么不回收
+		if !s.sweep(false) {
+			npages = 0
+		}
+		_g_.m.locks--
+		return npages
+	}
+}
+```
+
+span.sweep的实现：
+
+```
+func (s *mspan) sweep(preserve bool) bool {
+	// It's critical that we enter this function with preemption disabled,
+	// GC must not start while we are in the middle of this function.
+	// getg应该是从一个G列表里面遍历，具体行为还不清楚
+	_g_ := getg()
+	if _g_.m.locks == 0 && _g_.m.mallocing == 0 && _g_ != _g_.m.g0 {
+		throw("MSpan_Sweep: m is not locked")
+	}
+	sweepgen := mheap_.sweepgen
+	if s.state != mSpanInUse || s.sweepgen != sweepgen-1 {
+		print("MSpan_Sweep: state=", s.state, " sweepgen=", s.sweepgen, " mheap.sweepgen=", sweepgen, "\n")
+		throw("MSpan_Sweep: bad span state")
+	}
+
+	if trace.enabled {
+		traceGCSweepStart()
+	}
+
+	// 原子操作：mheap.pagesSwept += s.npages
+	atomic.Xadd64(&mheap_.pagesSwept, int64(s.npages))
+
+	// span里内存块的sizeclass
+	cl := s.sizeclass
+	// 避免多次计算sizeclass对应的内存单元大小
+	size := s.elemsize
+	res := false
+	nfree := 0
+
+	var head, end gclinkptr
+
+	// 获取goroutine的cache
+	c := _g_.m.mcache
+	freeToHeap := false
+
+	// Mark any free objects in this span so we don't collect them.
+	// sstart = span的内存开始地址
+	sstart := uintptr(s.start << _PageShift)
+	// 遍历span的freelist => object链表
+	for link := s.freelist; link.ptr() != nil; link = link.ptr().next {
+		// 如果节点的地址有问题(检查地址的首尾)会报错
+		if uintptr(link) < sstart || s.limit <= uintptr(link) {
+			// Free list is corrupted.
+			// 收集并打印错误信息
+			dumpFreeList(s)
+			throw("free list corrupted")
+		}
+		// heapBitsForAddr返回一个heapBits{bitp, shift}对象
+		// setMarkedNonAtomic为不回收的object加标记
+		heapBitsForAddr(uintptr(link)).setMarkedNonAtomic()
+	}
+
+	// Unlink & free special records for any objects we're about to free.
+	// Two complications here:
+	// 1. An object can have both finalizer and profile special records.
+	//    In such case we need to queue finalizer for execution,
+	//    mark the object as live and preserve the profile special.
+	// 2. A tiny object can have several finalizers setup for different offsets.
+	//    If such object is not marked, we need to queue all finalizers at once.
+	// Both 1 and 2 are possible at the same time.
+	// 处理一些SetFinalizer的情况，比较复杂，以后细看:
+	// http://blog.csdn.net/wang_xijue/article/details/52013262
+	specialp := &s.specials
+	special := *specialp
+	for special != nil {
+		// A finalizer can be set for an inner byte of an object, find object beginning.
+		p := uintptr(s.start<<_PageShift) + uintptr(special.offset)/size*size
+		hbits := heapBitsForAddr(p)
+		if !hbits.isMarked() {
+			// This object is not marked and has at least one special record.
+			// Pass 1: see if it has at least one finalizer.
+			hasFin := false
+			endOffset := p - uintptr(s.start<<_PageShift) + size
+			for tmp := special; tmp != nil && uintptr(tmp.offset) < endOffset; tmp = tmp.next {
+				if tmp.kind == _KindSpecialFinalizer {
+					// Stop freeing of object if it has a finalizer.
+					hbits.setMarkedNonAtomic()
+					hasFin = true
+					break
+				}
+			}
+			// Pass 2: queue all finalizers _or_ handle profile record.
+			for special != nil && uintptr(special.offset) < endOffset {
+				// Find the exact byte for which the special was setup
+				// (as opposed to object beginning).
+				p := uintptr(s.start<<_PageShift) + uintptr(special.offset)
+				if special.kind == _KindSpecialFinalizer || !hasFin {
+					// Splice out special record.
+					y := special
+					special = special.next
+					*specialp = special
+					freespecial(y, unsafe.Pointer(p), size)
+				} else {
+					// This is profile record, but the object has finalizers (so kept alive).
+					// Keep special record.
+					specialp = &special.next
+					special = *specialp
+				}
+			}
+		} else {
+			// object is still live: keep special record
+			specialp = &special.next
+			special = *specialp
+		}
+	}
+
+	// Sweep through n objects of given size starting at p.
+	// This thread owns the span now, so it can manipulate
+	// the block bitmap without atomic operations.
+
+	// layout返回3个值
+	// size: elemsize => 对应sizeclass的内存单元大小
+	// n: total / size
+	// total: s.npages << _PageShift
+	size, n, _ := s.layout()
+	// 遍历整个span，收集不可达和未标记的object
+	// 这里传入的func，会在heapBitsSweepSpan中判断span可以被回收的时候调用
+	heapBitsSweepSpan(s.base(), size, n, func(p uintptr) {
+		// At this point we know that we are looking at garbage object
+		// that needs to be collected.
+		if debug.allocfreetrace != 0 {
+			tracefree(unsafe.Pointer(p), size)
+		}
+		if msanenabled {
+			msanfree(unsafe.Pointer(p), size)
+		}
+
+		// Reset to allocated+noscan.
+		// 如果sizeclass == 0 => large span
+		if cl == 0 {
+			// Free large span.
+			// preserve的意思是，内存被goroutine独占，不还给heap
+			// 大span不允许preserve
+			if preserve {
+				throw("can't preserve large span")
+			}
+			heapBitsForSpan(p).initSpan(s.layout())
+			s.needzero = 1
+
+			// Free the span after heapBitsSweepSpan
+			// returns, since it's not done with the span.
+			freeToHeap = true
+		} else {
+			// Free small object.
+			// 处理小对象span的GC
+			if size > 2*sys.PtrSize { // size(object) > 16B, 1.6.2之后的小对象object都是16B
+				// >16B object，再前16B加标记
+				*(*uintptr)(unsafe.Pointer(p + sys.PtrSize)) = uintptrMask & 0xdeaddeaddeaddead // mark as "needs to be zeroed"
+			} else if size > sys.PtrSize { // size(object) == 16B
+				// == 16B object, 全部都是标记
+				*(*uintptr)(unsafe.Pointer(p + sys.PtrSize)) = 0
+			}
+			// head, end构建链表，收集不可达的object
+			// 注意这里的函数是个回调函数，被调用的时候都是某个对象free的情况
+			if head.ptr() == nil {
+				head = gclinkptr(p)
+			} else {
+				end.ptr().next = gclinkptr(p)
+			}
+			// 新收集到的free object被添加到队尾
+			end = gclinkptr(p)
+			end.ptr().next = gclinkptr(0x0bade5)
+			// 小对象回收计数器+1
+			nfree++
+		}
+	})
+
+	// We need to set s.sweepgen = h.sweepgen only when all blocks are swept,
+	// because of the potential for a concurrent free/SetFinalizer.
+	// But we need to set it before we make the span available for allocation
+	// (return it to heap or mcentral), because allocation code assumes that a
+	// span is already swept if available for allocation.
+	if freeToHeap || nfree == 0 {
+		// The span must be in our exclusive ownership until we update sweepgen,
+		// check for potential races.
+		// span在被GC扫描的时候不能被使用
+		if s.state != mSpanInUse || s.sweepgen != sweepgen-1 {
+			print("MSpan_Sweep: state=", s.state, " sweepgen=", s.sweepgen, " mheap.sweepgen=", sweepgen, "\n")
+			throw("MSpan_Sweep: bad span state after sweep")
+		}
+		// 原子操作: span.sweepgen = sweepgen
+		atomic.Store(&s.sweepgen, sweepgen)
+	}
+	if nfree > 0 {
+		c.local_nsmallfree[cl] += uintptr(nfree)
+		// freeSpan会向heap归还前面检测过来的head->end的空闲object
+		// return true if 整个span都被回收，注意对object的回收会是还给central
+		res = mheap_.central[cl].mcentral.freeSpan(s, int32(nfree), head, end, preserve)
+		// MCentral_FreeSpan updates sweepgen
+	} else if freeToHeap {
+		// Free large span to heap
+
+		// NOTE(rsc,dvyukov): The original implementation of efence
+		// in CL 22060046 used SysFree instead of SysFault, so that
+		// the operating system would eventually give the memory
+		// back to us again, so that an efence program could run
+		// longer without running out of memory. Unfortunately,
+		// calling SysFree here without any kind of adjustment of the
+		// heap data structures means that when the memory does
+		// come back to us, we have the wrong metadata for it, either in
+		// the MSpan structures or in the garbage collection bitmap.
+		// Using SysFault here means that the program will run out of
+		// memory fairly quickly in efence mode, but at least it won't
+		// have mysterious crashes due to confused memory reuse.
+		// It should be possible to switch back to SysFree if we also
+		// implement and then call some kind of MHeap_DeleteSpan.
+		if debug.efence > 0 {
+			s.limit = 0 // prevent mlookup from finding this span
+			sysFault(unsafe.Pointer(uintptr(s.start<<_PageShift)), size)
+		} else {
+			// 大对象的回收会直接还给heap
+			mheap_.freeSpan(s, 1)
+		}
+		c.local_nlargefree++
+		c.local_largefree += size
+		res = true
+	}
+	if trace.enabled {
+		traceGCSweepDone()
+	}
+	return res
+}
+```
