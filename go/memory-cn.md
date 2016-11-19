@@ -666,3 +666,33 @@ func (s *mspan) sweep(preserve bool) bool {
 	return res
 }
 ```
+
+GC的流程:
+* Set phase = GCscan from GCoff.
+* Wait for all P's to acknowledge phase change.
+  At this point all goroutines have passed through a GC safepoint and
+  know we are in the GCscan phase.
+* GC scans all goroutine stacks, mark and enqueues all encountered pointers.
+  Preempted goroutines are scanned before P schedules next goroutine.
+* Set phase = GCmark.
+* Wait for all P's to acknowledge phase change.
+* Now write barrier marks and enqueues black, grey, or white to white pointers.
+     Malloc still allocates white (non-marked) objects.
+*  Meanwhile GC transitively walks the heap marking reachable objects.
+*  When GC finishes marking heap, it preempts P's one-by-one and
+     retakes partial wbufs (filled by write barrier or during a stack scan of the goroutine
+     currently scheduled on the P).
+* Once the GC has exhausted all available marking work it sets phase = marktermination.
+* Wait for all P's to acknowledge phase change.
+* Malloc now allocates black objects, so number of unmarked reachable objects
+      monotonically decreases.
+* GC preempts P's one-by-one taking partial wbufs and marks all unmarked yet
+      reachable objects.
+* When GC completes a full cycle over P's and discovers no new grey
+       objects, (which means all reachable objects are marked) set phase = GCoff.
+* Wait for all P's to acknowledge phase change.
+* Now malloc allocates white (but sweeps spans before use).
+       Write barrier becomes nop.
+* GC does background sweeping, see description below.
+* When sufficient allocation has taken place replay the sequence starting at 0 above,
+       see discussion of GC rate below.
