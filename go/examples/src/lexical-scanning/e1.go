@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"unicode/utf8"
 )
 
 const (
-	EOF = -1
+	EOF    = -1
+	C_WS   = ' '
+	C_STAR = '*'
 )
 
 const (
@@ -65,7 +68,8 @@ func (l *lexer) ignore() {
 }
 
 func (l *lexer) emit(t tokenType) {
-	l.tokens <- token{typ: t, text: l.input[l.start:l.pos]}
+	l.tokens <- token{t, l.start, l.input[l.start:l.pos]}
+	l.start = l.pos
 }
 
 func (l *lexer) accept(valid string) (v bool) {
@@ -92,7 +96,7 @@ func (l *lexer) shutdown() {
 	close(l.tokens)
 }
 
-func (l *lexer) nextItem() (t token) {
+func (l *lexer) nextToken() (t token) {
 	t = <-l.tokens
 	l.lastPos = l.pos
 
@@ -100,7 +104,7 @@ func (l *lexer) nextItem() (t token) {
 }
 
 func (l *lexer) run() {
-	for l.state = lexEntrypoint; l.state != nil; {
+	for l.state = lexText; l.state != nil; {
 		l.state = l.state(l)
 	}
 
@@ -108,8 +112,18 @@ func (l *lexer) run() {
 }
 
 func main() {
-	l := newLexer("SELECT * FROM table1")
-	l.run()
+	wg := sync.WaitGroup{}
+	l := newLexer("SELECT * FROM table1 WHERE id = 1 AND name = 'abc'")
+	wg.Add(1)
+	go func() {
+		for t := l.nextToken(); len(t.text) > 0; t = l.nextToken() {
+			fmt.Println(t)
+		}
+		wg.Done()
+	}()
+
+	go l.run()
+	wg.Wait()
 }
 
 func newLexer(sql string) (l *lexer) {
@@ -121,6 +135,36 @@ func newLexer(sql string) (l *lexer) {
 	}
 }
 
-func lexEntrypoint(l *lexer) (fn stateFn) {
-	return
+// Scan expressions
+// 1. * -> STAR
+func lexText(l *lexer) (fn stateFn) {
+	l.acceptRun(" ")
+	l.ignore()
+
+	l.acceptRun("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*")
+	if isKeyword(l.input[l.start:l.pos]) {
+		l.emit(KEYWORD)
+		return lexText
+	} else {
+		l.emit(IDENT)
+		return lexText
+	}
+
+	return l.errorf("Illegal expression %s", l.input[l.start:l.pos])
+}
+
+// SELECT INSERT UPDATE DELETE FROM WHERE
+func isKeyword(in string) bool {
+	switch strings.ToUpper(in) {
+	case "SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE":
+		return true
+	}
+
+	return false
+}
+
+func isAlphaBeta(r rune) bool {
+	downcase := (r >= 'a') && (r <= 'z')
+	upcase := (r >= 'A') && (r <= 'Z')
+	return downcase || upcase
 }
