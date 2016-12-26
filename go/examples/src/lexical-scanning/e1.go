@@ -8,10 +8,12 @@ import (
 )
 
 const (
-	_NumberRunes  = "0123456789"
-	_OpValueRunes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	_Identifier   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'*"
-	_Keywords     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	_NumberRunes          = "0123456789"
+	_OpValueRunes         = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'"
+	_OpValueRunesNoQuotes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	_Identifier           = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`*"
+	_Keywords             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	_Operator             = "=><"
 )
 
 const (
@@ -162,20 +164,29 @@ func lexText(l *lexer) (fn stateFn) {
 		return lexText
 	}
 
-	// operator
-	l.acceptRun("=><")
-	if int(l.pos) > int(l.start) {
-		l.emit(OPERATOR)
-		return lexText
+	if l.accept(_Operator) {
+		l.backup()
+		return lexOperator
 	}
 
 	// is a valid op value
-	if l.accept(_Identifier) {
+	if l.accept(_OpValueRunes) {
 		l.backup()
 		return lexOpValue
 	}
 
 	return l.errorf("Illegal expression `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
+}
+
+func lexOperator(l *lexer) stateFn {
+	// operator
+	l.acceptRun(_Operator)
+	if int(l.pos) > int(l.start) {
+		l.emit(OPERATOR)
+		return lexText
+	}
+
+	return nil
 }
 
 // scan numbers or quoted values
@@ -192,11 +203,18 @@ func lexOpValue(l *lexer) stateFn {
 // scan identifier start with ', and ensure it's closed by '
 func lexOpQuoted(l *lexer) stateFn {
 	omitSpaces(l)
-	l.acceptRun(_OpValueRunes)
+
+	if l.peek() == '\'' {
+		l.ignore()
+	}
+	l.acceptRun(_OpValueRunesNoQuotes)
 	l.emit(OPV_QUOTED)
 	// ignore end quote
-	l.accept("'")
-	l.ignore()
+	if l.accept("'") {
+		l.ignore()
+	} else {
+		return l.errorf("Illegal quoted value`%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
+	}
 
 	return lexText
 }
