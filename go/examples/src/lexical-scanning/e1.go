@@ -17,7 +17,9 @@ const (
 	ILLEGAL tokenType = iota
 	KEYWORD
 	IDENT
-	OPERATOR
+	OPERATOR   // operator
+	OPV_NUMBER // operator value of numbers
+	OPV_QUOTED // operator value of quoted text
 )
 
 type stateFn func(*lexer) stateFn
@@ -113,7 +115,7 @@ func (l *lexer) run() {
 
 func main() {
 	wg := sync.WaitGroup{}
-	l := newLexer("SELECT * FROM table1 WHERE id = 1;")
+	l := newLexer("SELECT * FROM table1 WHERE id = 1 AND name = 'abc' AND age >= 2")
 	wg.Add(1)
 	go func() {
 		for t := l.nextToken(); len(t.text) > 0; t = l.nextToken() {
@@ -138,8 +140,7 @@ func newLexer(sql string) (l *lexer) {
 // Scan expressions
 // 1. * -> STAR
 func lexText(l *lexer) (fn stateFn) {
-	l.acceptRun(" ")
-	l.ignore()
+	omitSpaces(l)
 
 	l.acceptRun("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*")
 	if isKeyword(l.input[l.start:l.pos]) {
@@ -147,8 +148,8 @@ func lexText(l *lexer) (fn stateFn) {
 		return lexText
 	}
 
-	// identifier
-	l.acceptRun("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*")
+	// identifier, should
+	l.acceptRun("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*`")
 	if int(l.pos) > int(l.start) {
 		l.emit(IDENT)
 		return lexText
@@ -161,13 +162,57 @@ func lexText(l *lexer) (fn stateFn) {
 		return lexText
 	}
 
+	// is a valid op value
+	if l.accept("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'") {
+		l.backup()
+		return lexOpValue
+	}
+
 	return l.errorf("Illegal expression `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
+}
+
+// scan numbers or quoted values
+func lexOpValue(l *lexer) stateFn {
+	omitSpaces(l)
+	// handle quoted values
+	if l.accept("'") {
+		return lexOpQuoted
+	}
+
+	return lexOpNumber
+}
+
+// scan identifier start with ', and ensure it's closed by '
+func lexOpQuoted(l *lexer) stateFn {
+	omitSpaces(l)
+	l.acceptRun("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	l.emit(OPV_QUOTED)
+	// ignore end quote
+	l.accept("'")
+	l.ignore()
+
+	return lexText
+}
+
+func lexOpNumber(l *lexer) stateFn {
+	omitSpaces(l)
+	// handler numbers, decimals
+	// it must reach EOF or a space
+	l.acceptRun("0123456789")
+	if r := l.next(); r >= '0' && r <= '9' {
+		switch l.next() {
+		case EOF, ' ':
+			l.emit(OPV_NUMBER)
+			return nil
+		}
+	}
+	return l.errorf("Illegal number `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
 
 // SELECT INSERT UPDATE DELETE FROM WHERE
 func isKeyword(in string) bool {
 	switch strings.ToUpper(in) {
-	case "SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE":
+	case "SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE", "AND", "OR", "IS", "NOT", "IN":
 		return true
 	}
 
@@ -178,4 +223,9 @@ func isAlphaBeta(r rune) bool {
 	downcase := (r >= 'a') && (r <= 'z')
 	upcase := (r >= 'A') && (r <= 'Z')
 	return downcase || upcase
+}
+
+func omitSpaces(l *lexer) {
+	l.acceptRun(" ")
+	l.ignore()
 }
