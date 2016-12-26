@@ -11,7 +11,7 @@ const (
 	_NumberRunes          = "0123456789"
 	_OpValueRunes         = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'"
 	_OpValueRunesNoQuotes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	_Identifier           = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`*"
+	_Identifier           = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`*._"
 	_Keywords             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	_Operator             = "=><"
 )
@@ -124,7 +124,7 @@ func (l *lexer) run() {
 
 func main() {
 	wg := sync.WaitGroup{}
-	l := newLexer("SELECT * FROM table1 WHERE id = 1 AND name = 'abc' AND age >= 2")
+	l := newLexer("SELECT * FROM table1 t1 INNER JOIN table2 t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 2")
 	wg.Add(1)
 	go func() {
 		for t := l.nextToken(); len(t.text) > 0; t = l.nextToken() {
@@ -237,7 +237,11 @@ func lexOpNumber(l *lexer) stateFn {
 // SELECT INSERT UPDATE DELETE FROM WHERE
 func isKeyword(in string) bool {
 	switch strings.ToUpper(in) {
-	case "SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE", "AND", "OR", "IS", "NOT", "IN":
+	case "SELECT", "INSERT", "UPDATE", "DELETE":
+		return true
+	case "FROM", "WHERE", "AND", "OR", "IS", "NOT", "IN":
+		return true
+	case "INNER", "JOIN":
 		return true
 	}
 
