@@ -14,10 +14,10 @@ const (
 )
 
 const (
-	KEYWORD tokenType = iota
-	STAR
+	ILLEGAL tokenType = iota
+	KEYWORD
 	IDENT
-	ILLEGAL
+	OPERATOR
 )
 
 type stateFn func(*lexer) stateFn
@@ -113,7 +113,7 @@ func (l *lexer) run() {
 
 func main() {
 	wg := sync.WaitGroup{}
-	l := newLexer("SELECT * FROM table1 WHERE id = 1 AND name = 'abc'")
+	l := newLexer("SELECT * FROM table1 WHERE id = 1;")
 	wg.Add(1)
 	go func() {
 		for t := l.nextToken(); len(t.text) > 0; t = l.nextToken() {
@@ -145,12 +145,23 @@ func lexText(l *lexer) (fn stateFn) {
 	if isKeyword(l.input[l.start:l.pos]) {
 		l.emit(KEYWORD)
 		return lexText
-	} else {
+	}
+
+	// identifier
+	l.acceptRun("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*")
+	if int(l.pos) > int(l.start) {
 		l.emit(IDENT)
 		return lexText
 	}
 
-	return l.errorf("Illegal expression %s", l.input[l.start:l.pos])
+	// operator
+	l.acceptRun("=><")
+	if int(l.pos) > int(l.start) {
+		l.emit(OPERATOR)
+		return lexText
+	}
+
+	return l.errorf("Illegal expression `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
 
 // SELECT INSERT UPDATE DELETE FROM WHERE
