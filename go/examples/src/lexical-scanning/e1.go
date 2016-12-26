@@ -8,6 +8,13 @@ import (
 )
 
 const (
+	_NumberRunes  = "0123456789"
+	_OpValueRunes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	_Identifier   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'*"
+	_Keywords     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+)
+
+const (
 	EOF    = -1
 	C_WS   = ' '
 	C_STAR = '*'
@@ -142,14 +149,14 @@ func newLexer(sql string) (l *lexer) {
 func lexText(l *lexer) (fn stateFn) {
 	omitSpaces(l)
 
-	l.acceptRun("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*")
+	l.acceptRun(_Keywords)
 	if isKeyword(l.input[l.start:l.pos]) {
 		l.emit(KEYWORD)
 		return lexText
 	}
 
 	// identifier, should
-	l.acceptRun("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*`")
+	l.acceptRun(_Identifier)
 	if int(l.pos) > int(l.start) {
 		l.emit(IDENT)
 		return lexText
@@ -163,7 +170,7 @@ func lexText(l *lexer) (fn stateFn) {
 	}
 
 	// is a valid op value
-	if l.accept("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'") {
+	if l.accept(_Identifier) {
 		l.backup()
 		return lexOpValue
 	}
@@ -185,7 +192,7 @@ func lexOpValue(l *lexer) stateFn {
 // scan identifier start with ', and ensure it's closed by '
 func lexOpQuoted(l *lexer) stateFn {
 	omitSpaces(l)
-	l.acceptRun("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	l.acceptRun(_OpValueRunes)
 	l.emit(OPV_QUOTED)
 	// ignore end quote
 	l.accept("'")
@@ -198,7 +205,7 @@ func lexOpNumber(l *lexer) stateFn {
 	omitSpaces(l)
 	// handler numbers, decimals
 	// it must reach EOF or a space
-	l.acceptRun("0123456789")
+	l.acceptRun(_NumberRunes)
 	if r := l.next(); r >= '0' && r <= '9' {
 		switch l.next() {
 		case EOF, ' ':
