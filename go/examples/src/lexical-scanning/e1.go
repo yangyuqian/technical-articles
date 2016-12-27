@@ -132,7 +132,7 @@ func (l *lexer) run() {
 
 func main() {
 	wg := sync.WaitGroup{}
-	l := newLexer(`SELECT * FROM` + "`table1`" + `t1 INNER JOIN table2
+	l := newLexer(`SELECT * FROM` + " `table1` " + `t1 INNER JOIN table2
 	t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 123`)
 	wg.Add(1)
 	go func() {
