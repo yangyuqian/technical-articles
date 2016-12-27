@@ -118,7 +118,7 @@ func (l *lexer) shutdown() {
 
 func (l *lexer) nextToken() (t token) {
 	t = <-l.tokens
-	l.lastPos = l.pos
+	l.lastPos = t.pos
 
 	return
 }
