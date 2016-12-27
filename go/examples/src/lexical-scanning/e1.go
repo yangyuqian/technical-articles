@@ -116,11 +116,8 @@ func (l *lexer) shutdown() {
 	close(l.tokens)
 }
 
-func (l *lexer) nextToken() (t token) {
-	t = <-l.tokens
-	l.lastPos = t.pos
-
-	return
+func (l *lexer) tokenChan() <-chan token {
+	return l.tokens
 }
 
 func (l *lexer) run() {
@@ -137,7 +134,7 @@ func main() {
 	t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 123`)
 	wg.Add(1)
 	go func() {
-		for t := l.nextToken(); len(t.text) > 0; t = l.nextToken() {
+		for t := range l.tokenChan() {
 			fmt.Println(t)
 		}
 		wg.Done()
