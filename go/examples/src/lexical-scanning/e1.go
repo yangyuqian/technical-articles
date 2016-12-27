@@ -15,7 +15,7 @@ const (
 	_Quote                = "'"
 	_OpValueRunes         = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'"
 	_OpValueRunesNoQuotes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	_Ident                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*._"
+	_Ident                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 	_Keywords             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	_Operator             = "=><"
 )
@@ -30,7 +30,8 @@ const (
 	ILLEGAL tokenType = iota
 	KEYWORD
 	IDENT
-	OPERATOR   // operator
+	OPERATOR // operator
+	DOT
 	OPV_NUMBER // operator value of numbers
 	OPV_QUOTED // operator value of quoted text
 )
@@ -239,7 +240,11 @@ func lexIndent(l *lexer) stateFn {
 		return lexText
 	}
 
-	println(l.peek())
+	l.emit(IDENT)
+	if l.accept(".") {
+		l.emit(DOT)
+		return lexIndent
+	}
 
 	return l.errorf("Illegal identifier `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
