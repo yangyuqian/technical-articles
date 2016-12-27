@@ -9,9 +9,12 @@ import (
 
 const (
 	_NumberRunes          = "0123456789"
+	_Star                 = "*"
+	_RawQuote             = "`"
+	_Quote                = "'"
 	_OpValueRunes         = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'"
 	_OpValueRunesNoQuotes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	_Identifier           = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`*._"
+	_Ident                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*._"
 	_Keywords             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	_Operator             = "=><"
 )
@@ -78,6 +81,10 @@ func (l *lexer) ignore() {
 	l.start = l.pos
 }
 
+func (l *lexer) forget() {
+	l.pos = l.start
+}
+
 func (l *lexer) emit(t tokenType) {
 	l.tokens <- token{t, l.start, l.input[l.start:l.pos]}
 	l.start = l.pos
@@ -124,7 +131,7 @@ func (l *lexer) run() {
 
 func main() {
 	wg := sync.WaitGroup{}
-	l := newLexer("SELECT * FROM table1 t1 INNER JOIN table2 t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 2")
+	l := newLexer("SELECT * FROM `table1` t1 INNER JOIN table2 t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 123;")
 	wg.Add(1)
 	go func() {
 		for t := l.nextToken(); len(t.text) > 0; t = l.nextToken() {
@@ -150,32 +157,81 @@ func newLexer(sql string) (l *lexer) {
 // 1. * -> STAR
 func lexText(l *lexer) (fn stateFn) {
 	omitSpaces(l)
+	// reaches the EOF
+	if l.accept(";") {
+		return nil
+	}
 
 	l.acceptRun(_Keywords)
 	if isKeyword(l.input[l.start:l.pos]) {
 		l.emit(KEYWORD)
 		return lexText
 	}
+	l.forget()
 
-	// identifier, should
-	l.acceptRun(_Identifier)
+	if l.accept(_Star) {
+		l.emit(IDENT)
+		return lexText
+	}
+
+	// identifier
+	if l.peek() == '`' {
+		return lexIndentLeftQuote
+	}
+	var isQuoted, isOperator, isNumber bool
+	isQuoted = l.accept(_Quote)
+	if isQuoted {
+		l.backup()
+	}
+
+	isOperator = l.accept(_Operator)
+	if isOperator {
+		l.backup()
+	}
+
+	isNumber = l.accept(_NumberRunes)
+	if isNumber {
+		l.backup()
+	}
+
+	if !isQuoted && !isOperator && !isNumber {
+		return lexIndent
+	}
+
+	if isOperator {
+		return lexOperator
+	}
+
+	// after a valid operator, there should be a valid op value
+	if isQuoted || isNumber {
+		return lexOpValue
+	}
+
+	return l.errorf("Illegal expression `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
+}
+
+func lexIndentLeftQuote(l *lexer) stateFn {
+	omitSpaces(l)
+	l.acceptRun(_Ident + _RawQuote)
+
 	if int(l.pos) > int(l.start) {
 		l.emit(IDENT)
 		return lexText
 	}
 
-	if l.accept(_Operator) {
-		l.backup()
-		return lexOperator
+	return nil
+}
+
+// identifiers without raw quotes
+func lexIndent(l *lexer) stateFn {
+	l.accept(_RawQuote)
+	l.acceptRun(_Ident)
+	if l.peek() == ' ' {
+		l.emit(IDENT)
+		return lexText
 	}
 
-	// is a valid op value
-	if l.accept(_OpValueRunes) {
-		l.backup()
-		return lexOpValue
-	}
-
-	return l.errorf("Illegal expression `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
+	return l.errorf("Illegal identifier `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
 
 func lexOperator(l *lexer) stateFn {
@@ -193,7 +249,7 @@ func lexOperator(l *lexer) stateFn {
 func lexOpValue(l *lexer) stateFn {
 	omitSpaces(l)
 	// handle quoted values
-	if l.accept("'") {
+	if l.peek() == '\'' {
 		return lexOpQuoted
 	}
 
@@ -204,17 +260,8 @@ func lexOpValue(l *lexer) stateFn {
 func lexOpQuoted(l *lexer) stateFn {
 	omitSpaces(l)
 
-	if l.peek() == '\'' {
-		l.ignore()
-	}
-	l.acceptRun(_OpValueRunesNoQuotes)
+	l.acceptRun(_OpValueRunes)
 	l.emit(OPV_QUOTED)
-	// ignore end quote
-	if l.accept("'") {
-		l.ignore()
-	} else {
-		return l.errorf("Illegal quoted value`%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
-	}
 
 	return lexText
 }
@@ -224,13 +271,12 @@ func lexOpNumber(l *lexer) stateFn {
 	// handler numbers, decimals
 	// it must reach EOF or a space
 	l.acceptRun(_NumberRunes)
-	if r := l.next(); r >= '0' && r <= '9' {
-		switch l.next() {
-		case EOF, ' ':
-			l.emit(OPV_NUMBER)
-			return nil
-		}
+
+	if int(l.pos) > int(l.start) {
+		l.emit(OPV_NUMBER)
+		return lexText
 	}
+
 	return l.errorf("Illegal number `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
 
