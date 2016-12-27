@@ -153,7 +153,7 @@ func newLexer(sql string) (l *lexer) {
 		start:  Pos(0),
 		pos:    Pos(0),
 		input:  sql,
-		tokens: make(chan token),
+		tokens: make(chan token, 3),
 	}
 }
 
