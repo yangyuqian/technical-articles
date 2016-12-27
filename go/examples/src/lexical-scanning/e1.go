@@ -183,7 +183,7 @@ func lexText(l *lexer) (fn stateFn) {
 
 	// identifier
 	if l.peek() == '`' {
-		return lexIndentLeftQuote
+		return lexIdentLeftQuote
 	}
 	var isQuoted, isOperator, isNumber bool
 	isQuoted = l.accept(_Quote)
@@ -202,7 +202,7 @@ func lexText(l *lexer) (fn stateFn) {
 	}
 
 	if !isQuoted && !isOperator && !isNumber {
-		return lexIndent
+		return lexIdent
 	}
 
 	if isOperator {
@@ -217,7 +217,7 @@ func lexText(l *lexer) (fn stateFn) {
 	return l.errorf("Illegal expression `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
 
-func lexIndentLeftQuote(l *lexer) stateFn {
+func lexIdentLeftQuote(l *lexer) stateFn {
 	omitSpaces(l)
 	l.acceptRun(_Ident + _RawQuote)
 
@@ -230,7 +230,7 @@ func lexIndentLeftQuote(l *lexer) stateFn {
 }
 
 // identifiers without raw quotes
-func lexIndent(l *lexer) stateFn {
+func lexIdent(l *lexer) stateFn {
 	omitSpaces(l)
 	l.accept(_RawQuote)
 	l.acceptRun(_Ident)
@@ -243,7 +243,7 @@ func lexIndent(l *lexer) stateFn {
 	l.emit(IDENT)
 	if l.accept(".") {
 		l.emit(DOT)
-		return lexIndent
+		return lexIdent
 	}
 
 	return l.errorf("Illegal identifier `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
