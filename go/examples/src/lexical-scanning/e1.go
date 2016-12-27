@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	_MeaninglessRunes     = " \n\r\t"
 	_NumberRunes          = "0123456789"
 	_Star                 = "*"
 	_RawQuote             = "`"
@@ -131,7 +132,8 @@ func (l *lexer) run() {
 
 func main() {
 	wg := sync.WaitGroup{}
-	l := newLexer("SELECT * FROM `table1` t1 INNER JOIN table2 t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 123")
+	l := newLexer(`SELECT * FROM` + "`table1`" + `t1 INNER JOIN table2
+	t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 123`)
 	wg.Add(1)
 	go func() {
 		for t := l.nextToken(); len(t.text) > 0; t = l.nextToken() {
@@ -228,12 +230,16 @@ func lexIndentLeftQuote(l *lexer) stateFn {
 
 // identifiers without raw quotes
 func lexIndent(l *lexer) stateFn {
+	omitSpaces(l)
 	l.accept(_RawQuote)
 	l.acceptRun(_Ident)
-	if l.peek() == ' ' {
+	if l.accept(_MeaninglessRunes) {
+		l.backup()
 		l.emit(IDENT)
 		return lexText
 	}
+
+	println(l.peek())
 
 	return l.errorf("Illegal identifier `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
@@ -305,6 +311,6 @@ func isAlphaBeta(r rune) bool {
 }
 
 func omitSpaces(l *lexer) {
-	l.acceptRun(" ")
+	l.acceptRun(_MeaninglessRunes)
 	l.ignore()
 }
