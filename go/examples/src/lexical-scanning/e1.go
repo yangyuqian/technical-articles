@@ -131,7 +131,7 @@ func (l *lexer) run() {
 
 func main() {
 	wg := sync.WaitGroup{}
-	l := newLexer("SELECT * FROM `table1` t1 INNER JOIN table2 t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 123;")
+	l := newLexer("SELECT * FROM `table1` t1 INNER JOIN table2 t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 123")
 	wg.Add(1)
 	go func() {
 		for t := l.nextToken(); len(t.text) > 0; t = l.nextToken() {
@@ -145,6 +145,10 @@ func main() {
 }
 
 func newLexer(sql string) (l *lexer) {
+	if !strings.HasSuffix(sql, ";") {
+		sql = sql + ";"
+	}
+
 	return &lexer{
 		start:  Pos(0),
 		pos:    Pos(0),
