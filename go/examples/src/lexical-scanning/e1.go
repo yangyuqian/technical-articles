@@ -36,7 +36,8 @@ const (
 	OPV_QUOTED // operator value of quoted text
 )
 
-type stateFn func(*lexer) stateFn
+type lexFn func(*lexer) lexFn
+type parseFn func(*parser) parseFn
 
 type tokenType int
 
@@ -54,7 +55,7 @@ type lexer struct {
 	lastPos Pos
 	width   Pos
 	input   string
-	state   stateFn
+	state   lexFn
 	tokens  chan token
 }
 
@@ -107,7 +108,7 @@ func (l *lexer) acceptRun(valid string) {
 	l.backup()
 }
 
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
+func (l *lexer) errorf(format string, args ...interface{}) lexFn {
 	l.tokens <- token{ILLEGAL, l.start, fmt.Sprintf(format, args...)}
 	return nil
 }
@@ -128,15 +129,31 @@ func (l *lexer) run() {
 	l.shutdown()
 }
 
+type parser struct {
+	*lexer
+	state parseFn
+}
+
+func (p *parser) run() {
+	for p.state = parseSQL; p.state != nil; {
+		p.state = p.state(p)
+	}
+}
+
+func newParser(l *lexer) *parser {
+	return &parser{
+		lexer: l,
+	}
+}
+
 func main() {
 	wg := sync.WaitGroup{}
 	l := newLexer(`SELECT t1.c1, t1.c2, t2.c1 FROM` + " `table1` " + `t1 INNER JOIN table2
 	t2 ON t1.t2_id = t2.id WHERE id = 1 AND name = 'abc' AND age >= 123`)
+	p := newParser(l)
 	wg.Add(1)
 	go func() {
-		for t := range l.tokenChan() {
-			fmt.Println(t)
-		}
+		p.run()
 		wg.Done()
 	}()
 
@@ -159,7 +176,7 @@ func newLexer(sql string) (l *lexer) {
 
 // Scan expressions
 // 1. * -> STAR
-func lexText(l *lexer) (fn stateFn) {
+func lexText(l *lexer) (fn lexFn) {
 	omitSpaces(l)
 	// reaches the EOF
 	if l.accept(";") {
@@ -214,7 +231,7 @@ func lexText(l *lexer) (fn stateFn) {
 	return l.errorf("Illegal expression `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
 
-func lexIdentLeftQuote(l *lexer) stateFn {
+func lexIdentLeftQuote(l *lexer) lexFn {
 	omitSpaces(l)
 	l.acceptRun(_Ident + _RawQuote)
 
@@ -227,7 +244,7 @@ func lexIdentLeftQuote(l *lexer) stateFn {
 }
 
 // identifiers without raw quotes
-func lexIdent(l *lexer) stateFn {
+func lexIdent(l *lexer) lexFn {
 	omitSpaces(l)
 	l.accept(_RawQuote)
 	l.acceptRun(_Ident)
@@ -251,7 +268,7 @@ func lexIdent(l *lexer) stateFn {
 	return l.errorf("Illegal identifier `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
 }
 
-func lexOperator(l *lexer) stateFn {
+func lexOperator(l *lexer) lexFn {
 	// operator
 	l.acceptRun(_Operator)
 	if int(l.pos) > int(l.start) {
@@ -263,7 +280,7 @@ func lexOperator(l *lexer) stateFn {
 }
 
 // scan numbers or quoted values
-func lexOpValue(l *lexer) stateFn {
+func lexOpValue(l *lexer) lexFn {
 	omitSpaces(l)
 	// handle quoted values
 	if l.peek() == '\'' {
@@ -274,7 +291,7 @@ func lexOpValue(l *lexer) stateFn {
 }
 
 // scan identifier start with ', and ensure it's closed by '
-func lexOpQuoted(l *lexer) stateFn {
+func lexOpQuoted(l *lexer) lexFn {
 	omitSpaces(l)
 
 	l.acceptRun(_OpValueRunes)
@@ -283,7 +300,7 @@ func lexOpQuoted(l *lexer) stateFn {
 	return lexText
 }
 
-func lexOpNumber(l *lexer) stateFn {
+func lexOpNumber(l *lexer) lexFn {
 	omitSpaces(l)
 	// handler numbers, decimals
 	// it must reach EOF or a space
@@ -295,6 +312,29 @@ func lexOpNumber(l *lexer) stateFn {
 	}
 
 	return l.errorf("Illegal number `%s`, start:pos => %d:%d", l.input[l.start:], l.start, l.pos)
+}
+
+func parseSQL(p *parser) parseFn {
+	t := <-p.tokenChan()
+	if t.typ == KEYWORD {
+		switch strings.ToUpper(t.text) {
+		case "SELECT":
+			return parseSelColumns
+		case "FROM":
+			return parseFrom
+		}
+	}
+	return nil
+}
+
+func parseSelColumns(p *parser) parseFn {
+	fmt.Println(<-p.tokenChan())
+	return parseSQL
+}
+
+func parseFrom(p *parser) parseFn {
+	fmt.Println(<-p.tokenChan())
+	return nil
 }
 
 // SELECT INSERT UPDATE DELETE FROM WHERE
