@@ -1,6 +1,11 @@
 Go Refactor
 --------------
 
+自动化重构大体可分为2个步骤：
+
+* 通过模板自动化生成类型安全的重构代码
+* 通过goimports去除自动化重构后多余的imports
+
 修改模板中必须包含before和after两个function:
 
 ```
@@ -35,4 +40,5 @@ func before(s string) error {
 	return fmt.Errorf("%s", s)
 }
 ```
+
 
