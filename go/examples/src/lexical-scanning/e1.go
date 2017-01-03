@@ -129,9 +129,15 @@ func (l *lexer) run() {
 	l.shutdown()
 }
 
+type query struct {
+}
+
 type parser struct {
 	*lexer
-	state parseFn
+	state       parseFn
+	buf         []token
+	bufSize     int
+	parsedQuery query
 }
 
 func (p *parser) run() {
@@ -140,9 +146,38 @@ func (p *parser) run() {
 	}
 }
 
+func (p *parser) fill() {
+	n := p.bufSize - len(p.buf)
+	for i := 0; i < n; i++ {
+		p.buf = append(p.buf, <-p.tokenChan())
+	}
+}
+
+func (p *parser) peek() (t token) {
+	p.fill()
+	if len(p.buf) > 0 {
+		t = p.buf[0]
+	}
+
+	return
+}
+
+// buf is an array acts as a FIFO queue
+func (p *parser) next() (t token) {
+	p.fill()
+	if len(p.buf) > 0 {
+		t = p.buf[0]
+		p.buf = p.buf[1:]
+	}
+	p.fill()
+
+	return
+}
+
 func newParser(l *lexer) *parser {
 	return &parser{
-		lexer: l,
+		lexer:   l,
+		bufSize: 3,
 	}
 }
 
@@ -315,8 +350,7 @@ func lexOpNumber(l *lexer) lexFn {
 }
 
 func parseSQL(p *parser) parseFn {
-	t := <-p.tokenChan()
-	if t.typ == KEYWORD {
+	if t := p.next(); t.typ == KEYWORD {
 		switch strings.ToUpper(t.text) {
 		case "SELECT":
 			return parseSelColumns
@@ -324,16 +358,15 @@ func parseSQL(p *parser) parseFn {
 			return parseFrom
 		}
 	}
+
 	return nil
 }
 
 func parseSelColumns(p *parser) parseFn {
-	fmt.Println(<-p.tokenChan())
 	return parseSQL
 }
 
 func parseFrom(p *parser) parseFn {
-	fmt.Println(<-p.tokenChan())
 	return nil
 }
 
