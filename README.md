@@ -18,6 +18,7 @@ Ruby
 
 Assembly
 * [Intel i7 Assembly](asm/unix-mac-intel-i7-cn.md)
+* [Plan 9 Assembly](asm/golang-plan9-assembly-cn.md)
 
 Docker
 
