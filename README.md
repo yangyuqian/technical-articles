@@ -12,6 +12,7 @@ Go
 * [Usage of Channel(Chinese)](go/channel-usage-cn.md)
 * [Memory and GC(Chinese)](go/memory-cn.md)
 * [Go Pkgs](go/gopkgs/README.md)
+* [优酷视频课程 － 大洋芋de小米渣系列](go/series/README.md)
 
 Ruby
 * [Rails Class Loader(Chinese)](https://github.com/yangyuqian/ruby-articles/blob/master/RAILS-CLASS-LOADER.md)
