@@ -5,7 +5,6 @@ Getting Startted - Part1
 
 * Go简介
 * Go开发环境搭建
-* 基于vim开发Go
 * Hello World
 
 # Go简介
@@ -95,12 +94,6 @@ func main() {
 ```
 
 图1. 完整可用的Go开发环境
-
-# 基于vim开发Go
-
-目前Go开发有很多免费的IDE可供选择，如vim, emacs, Sublime, Ecplise, IntelliJ等.
-
-可以根据自己的喜好来选择IDE.
 
 
 # Hello World
