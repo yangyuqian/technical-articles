@@ -3,7 +3,7 @@
 
 Go:
 
-1. [开发环境搭建](s1_getting_startted-cn.md)
+1. [开发环境搭建](s1_getting_startted_part1-cn.md)
 
 持续更新中...
 
