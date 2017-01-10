@@ -1,7 +1,7 @@
 大洋芋de小米渣 － 免费技术频道
 -----------------
 
-Go[Youku视频教程](http://i.youku.com/i/UMjg3MTcyNTE2MA==):
+Go [Youku视频教程](http://i.youku.com/i/UMjg3MTcyNTE2MA==):
 
 1. [开发环境搭建](s1_getting_startted_part1-cn.md)
 
