@@ -52,8 +52,10 @@ func main() {
 	bucket := ratelimit.NewBucketWithQuantum(time.Duration(interval)*time.Millisecond, capacity, quantum)
 	for i := 0; i < 500; i++ {
 		go func() {
-			bucket.Wait(1)
-			print(".")
+			for {
+				bucket.Wait(1)
+				print(".")
+			}
 		}()
 	}
 
@@ -61,11 +63,23 @@ func main() {
 }
 ```
 
-这个例子默认会执行10秒，Token Bucket设置如下：
+这个例子默认会执行10秒，启动500个goroutine模拟高并发事件处理，
+每个事件被处理后会打印一个点`.`，Token Bucket默认设置如下：
 
+* BucketSize: 10
 * Interval: 1000 ms
-* Capacity: 10
 * Quantum: 1
 
 [![asciicast](https://asciinema.org/a/bavkebqxc4wjgb2zv0t97es9y.png)](https://asciinema.org/a/3mmy9EJETqIUkQF9E4a6gEQi1)
 
+可见一开始执行了10个事件，然后后面每秒执行1个事件，并发事件被稳定限流了。
+
+现在可以划重点了，这几个参数理解清楚，用Token Bucket就不会出问题了：
+
+* BucketSize：控制单位interval内可能出现的最高并发数，当桶被装满后就无法再填充Token了
+* Interval: 添加新Token的周期，控制限流的精度，比如不但希望控制最高并发时间数，还要对事件进行细粒度的控制。如10ms只允许执行2个事件，虽然1s内理论上还是可以执行200个事件，这比1s中的某1ms执行了200个事件的压力要小很多
+* Quantum: 这也是非常关键的控制参数，控制单位interval放入桶的token数，最终影响的是持续压力的模型
+
+如果BucketSize设得非常大，而Quantum很小，那么整个限流模型就是先松后紧。反之如果BucketSize设得较小，而Quantum比较大，那么就是先紧后松的模型。
+
+实践中发现先紧后松模型能够给系统足够的预热时间，比如系统初始化需要懒加载一些cache，这是限流能够保护系统在预热阶段不要出现太高的负载，当系统稳定后，限流也相应变松。

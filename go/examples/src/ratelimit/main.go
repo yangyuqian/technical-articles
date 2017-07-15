@@ -24,8 +24,10 @@ func main() {
 	bucket := ratelimit.NewBucketWithQuantum(time.Duration(interval)*time.Millisecond, capacity, quantum)
 	for i := 0; i < 500; i++ {
 		go func() {
-			bucket.Wait(1)
-			print(".")
+			for {
+				bucket.Wait(1)
+				print(".")
+			}
 		}()
 	}
 
