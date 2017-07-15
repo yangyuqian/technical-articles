@@ -12,6 +12,7 @@ Go
 * [Implementation of Channel(Chinese)](go/channel-implementation-cn.md)
 * [Usage of Channel(Chinese)](go/channel-usage-cn.md)
 * [Memory and GC(Chinese)](go/memory-cn.md)
+* [基于Token Bucket限流简介](go/rate-limit.md)
 * [Go Pkgs](go/gopkgs/README.md)
 * [优酷视频课程 － 大洋芋de小米渣系列](go/series/README.md)
 
