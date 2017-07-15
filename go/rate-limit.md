@@ -23,4 +23,49 @@ Token Bucket算法涉及三个变量：
 
 光说不练假把式，这里基于[Rate Limit](https://github.com/juju/ratelimit)来实现几个例子看一下不同的参数设置有什么影响。
 
+例 1. `go/examples/src/ratelimit/main.go`
+
+```
+package main
+
+import (
+	"flag"
+	"github.com/juju/ratelimit"
+	"time"
+)
+
+var (
+	interval uint
+	capacity int64
+	quantum  int64
+	duration uint
+)
+
+func init() {
+	flag.UintVar(&interval, "i", 1000, "set token bucket interval in milliseconds")
+	flag.Int64Var(&capacity, "c", 10, "set token bucket capacity")
+	flag.Int64Var(&quantum, "q", 1, "set token bucket quantum")
+	flag.UintVar(&duration, "d", 10, "set duration to run this example")
+}
+
+func main() {
+	bucket := ratelimit.NewBucketWithQuantum(time.Duration(interval)*time.Millisecond, capacity, quantum)
+	for i := 0; i < 500; i++ {
+		go func() {
+			bucket.Wait(1)
+			print(".")
+		}()
+	}
+
+	<-time.After(time.Duration(duration) * time.Second)
+}
+```
+
+这个例子默认会执行10秒，Token Bucket设置如下：
+
+* Interval: 1000 ms
+* Capacity: 10
+* Quantum: 1
+
+[![asciicast](https://asciinema.org/a/bavkebqxc4wjgb2zv0t97es9y.png)](https://asciinema.org/a/3mmy9EJETqIUkQF9E4a6gEQi1)
 
