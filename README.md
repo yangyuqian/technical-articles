@@ -29,6 +29,11 @@ Docker
 
 TODO
 
+Kubernetes
+
+* [Brief Introduction to Network in Kubernetes Cluster(Chinese)](https://github.com/yangyuqian/k8s-the-hard-way/blob/master/network/summary-cn.md)
+* [In-depth summary of VXLAN backend in Flannel(Chinese)](https://github.com/yangyuqian/k8s-the-hard-way/blob/master/network/vxlan-flannel-cn.md)
+
 Nginx
 
 * [MRuby Extention(Chinese)](nginx/nginx-mruby-cn.md)
@@ -40,4 +45,4 @@ VIM
 
 Distributed System
 
-* [serf中去中心化系统的原理和实现](http://www.infoq.com/cn/articles/principle-and-impleme-of-de-centering-system-in-serf)
+* [InfoQ: serf中去中心化系统的原理和实现](http://www.infoq.com/cn/articles/principle-and-impleme-of-de-centering-system-in-serf)
